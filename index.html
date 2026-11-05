@@ -171,6 +171,83 @@
     .ri::after{display:none}
     body.has-rail main{padding-bottom:110px}
   }
+
+  /* party */
+  .pbanner{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;margin-top:18px;padding:22px 26px;border-radius:16px;text-decoration:none;color:#fff;overflow:hidden;
+    background:linear-gradient(120deg,#2b1d3f,#53246a 45%,#a8326b);box-shadow:0 12px 30px var(--shadow);animation:cardIn .7s .75s cubic-bezier(.2,1,.3,1) both;transition:transform .25s}
+  .pbanner:hover{transform:translateY(-4px)}
+  .pbanner::before{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,transparent,rgba(255,255,255,.12),transparent 30%);animation:sweep 7s linear infinite}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+  .pbanner>*{position:relative}
+  .pbanner h2{font-family:var(--serif);font-weight:800;font-size:28px;margin:2px 0 4px;letter-spacing:-.5px}
+  .pbanner p{margin:0;font-size:15px;line-height:1.45;opacity:.9;max-width:520px}
+  .pbanner .new{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.1em;background:#F2C14E;color:#141414;padding:3px 8px;border-radius:6px}
+  .pbanner .pill{background:#fff;color:#141414}
+  .pb-av{display:flex}
+  .pb-av span{width:46px;height:46px;border-radius:50%;margin-left:-12px;border:3px solid #3a2050;display:flex;align-items:center;justify-content:center;font-weight:800;color:#141414;background:var(--c);animation:bob 3s ease-in-out infinite;animation-delay:calc(var(--i)*-.6s)}
+  .pb-av span:first-child{margin-left:0}
+  .party{max-width:600px;margin:0 auto;padding-top:22px}
+  .pbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+  .plabel{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+  .psub{font-size:13.5px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+  .psub b{color:var(--ink)}
+  .pfield{width:100%;font:inherit;font-size:17px;padding:12px 14px;border:1.5px solid var(--field-line);border-radius:10px;background:var(--field);color:var(--ink);-webkit-text-fill-color:var(--ink);outline:none}
+  .pfield:focus{border-color:var(--ink)}
+  .pfield.code{text-transform:uppercase;letter-spacing:.3em;font-weight:800;text-align:center}
+  .pchoice{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pchoice .pbox{margin:0}
+  .pjoin{display:flex;gap:8px}
+  .pjoin .pfield{min-width:0}
+  .pwait{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-weight:500;padding:22px;margin-bottom:12px}
+  .spin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--ink);animation:rot .8s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .pcode-box{text-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+  .pcode{display:flex;justify-content:center;gap:8px;margin:4px 0 14px}
+  .pcode span{width:58px;height:68px;border-radius:12px;background:var(--ink);color:var(--on-ink);font-family:var(--serif);font-weight:800;font-size:38px;display:flex;align-items:center;justify-content:center;animation:flipIn .6s cubic-bezier(.3,1.3,.5,1) both;animation-delay:calc(var(--i)*90ms)}
+  .plink{display:flex;gap:8px}
+  .plink .pfield{font-size:13px;color:var(--muted);-webkit-text-fill-color:var(--muted)}
+  .plink .btn{white-space:nowrap}
+  .plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .pp{display:flex;align-items:center;gap:10px;font-weight:700;animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both}
+  .pp em,.pr em{font-style:normal;font-size:11px;font-weight:700;color:var(--muted);margin-left:2px}
+  .pp.off,.ps.off{opacity:.4}
+  .pav{width:30px;height:30px;flex:none;border-radius:50%;background:var(--c);color:#141414;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+  .pav.big{width:38px;height:38px;font-size:17px}
+  .pseg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .pseg button{border:0;background:transparent;padding:9px 18px;font-weight:700;font-size:14px}
+  .pseg button.on{background:var(--ink);color:var(--on-ink)}
+  .ptop{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .pscores{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px}
+  .ps{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--card);border:1.5px solid var(--line);white-space:nowrap;font-size:14px;transition:border-color .2s,transform .2s}
+  .ps .nm{font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis}
+  .ps.turn{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 6px 16px var(--shadow)}
+  .pjack{font-size:13px;color:var(--muted);font-weight:700}
+  .pturn{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:4px}
+  .pturn.me{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,#F08BB6 45%,transparent);animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both}
+  .pt-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:17px}
+  .pt-h b{flex:1}
+  .ptimer{position:relative;width:120px;height:26px;border-radius:999px;background:var(--soft);overflow:hidden;flex:none}
+  .ptimer i{position:absolute;left:0;top:0;bottom:0;background:var(--green);border-radius:999px;transition:width .25s linear}
+  .ptimer span{position:relative;display:block;text-align:center;font-size:12.5px;font-weight:800;line-height:26px;font-variant-numeric:tabular-nums}
+  .ptimer.low i{background:var(--red)}
+  .ptimer.low{animation:shake .5s ease infinite}
+  .prow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 4px}
+  .link{border:0;background:none;font-weight:700;font-size:14px;color:var(--muted);text-decoration:underline;padding:4px}
+  .row.skipped{color:var(--muted);font-weight:500}
+  .pwin{text-align:center;font-family:var(--serif);font-weight:800;font-size:clamp(30px,6vw,42px);margin:10px 0 16px;animation:popIn .7s cubic-bezier(.2,1.4,.4,1) both}
+  .pwin .crown{display:block;font-size:52px;animation:bob 2.4s ease-in-out infinite}
+  .ppod{display:grid;gap:8px;margin-bottom:14px}
+  .pr{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;animation:fadeUp .5s cubic-bezier(.2,1,.3,1) both;animation-delay:calc(var(--n)*90ms + .2s)}
+  .pr .md{width:28px;text-align:center;font-size:20px;font-weight:800}
+  .pr .nm{flex:1;font-weight:700}
+  .pr b{font-family:var(--serif);font-size:22px}
+  .pr:first-child{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 50%,transparent)}
+  @media (max-width:640px){
+    .pbanner{grid-template-columns:1fr;text-align:left;gap:12px}
+    .pchoice{grid-template-columns:1fr}
+    .pcode span{width:50px;height:60px;font-size:32px}
+    .ptimer{width:84px}
+  }
   /* stats page */
   .stats-page{max-width:820px;margin:0 auto;padding-top:22px}
   .stats-page h1{font-family:var(--serif);font-weight:800;font-size:clamp(34px,6vw,48px);letter-spacing:-1px;margin:16px 0 4px}
@@ -798,6 +875,9 @@ function renderHub(){
         <div class="body"><h2>${g.name}</h2><div class="tag">${g.tag}</div><p>${g.blurb}</p>
           <div class="foot"><span class="pill ${s.done?"done":""}" style="--n:${n}">${s.label}</span><span class="num">#${PNUM}</span></div></div>
       </a>`;}).join("")}</section>
+    <a class="pbanner" href="#party"><div class="pb-av">${["M","A","J","K"].map((c,i)=>`<span style="--c:${["#F2C14E","#86C98A","#6AA8EC","#F08BB6"][i]};--i:${i}">${c}</span>`).join("")}</div>
+      <div><span class="new">NEW · MULTIPLAYER</span><h2>Party</h2><p>Play live with up to 8 friends on their own phones. Name anything that fits the clues, and race to find the Jackpot.</p></div>
+      <span class="pill">Start a party</span></a>
     <p class="note">Your progress and streaks are saved in this browser.</p>`;
   tickHero();
   if(canHover())app.querySelectorAll(".card").forEach(card=>{
@@ -876,13 +956,14 @@ function route(){
   renderRail();
   const h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);
   document.getElementById("statsBtn").classList.toggle("on",h==="stats");
-  if(h==="stats"){practice=null;renderStats();}
+  if(/^party(-|$)/.test(h)){practice=null;if(window.renderParty)renderParty();else app.innerHTML='<div class="pwait"><span class="spin"></span>Loading…</div>';}
+  else if(h==="stats"){practice=null;renderStats();}
   else if(!g){practice=null;renderHub();}else{if(practice&&practice.id!==g.id)practice=null;renderGame(g);}
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",route);
 // Keep every open tab in sync: redraw when another tab saves progress, or when this tab comes back into view.
-function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;app.classList.add("still");const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);renderRail();if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
+function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;if(/^#party/.test(location.hash))return;app.classList.add("still");const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);renderRail();if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
 window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("hunch:"))refresh();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
 
@@ -1133,5 +1214,7 @@ themeBtn.onclick=()=>{const t=document.documentElement.dataset.theme==="dark"?"l
 
 route();
 </script>
+<script src="party-data.js"></script>
+<script src="party.js"></script>
 </body>
 </html>
