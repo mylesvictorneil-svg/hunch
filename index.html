@@ -131,6 +131,40 @@
   .cluelist li.final::before{background:var(--gold);color:#141414}
   .bo-prompt{font-size:14px;line-height:1.5;margin:0 0 14px;color:var(--text2)}
 
+
+  /* game switcher rail */
+  #rail{position:fixed;left:18px;top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px;border-radius:20px;
+    background:color-mix(in srgb,var(--card) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 10px 30px var(--shadow)}
+  #rail[hidden]{display:none}
+  #rail.in{animation:railIn .55s cubic-bezier(.2,1.2,.4,1) both}
+  @keyframes railIn{from{opacity:0;transform:translateY(-50%) translateX(-30px)}}
+  #rail .sep{width:24px;height:1px;background:var(--line);margin:2px 0}
+  .ri{position:relative;width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:transform .2s cubic-bezier(.2,1.4,.4,1),box-shadow .2s}
+  .ri.g{background:var(--c)}
+  .ri.g svg{width:27px;height:27px}
+  .ri.u{color:var(--muted);border:1.5px solid transparent}
+  .ri.u svg{width:22px;height:22px}
+  .ri.u:hover,.ri.u.on{color:var(--ink);border-color:var(--line)}
+  .ri.g:not(.on){opacity:.78;filter:saturate(.85)}
+  .ri:hover{transform:scale(1.1)}
+  .ri.g.on{opacity:1;filter:none;box-shadow:0 0 0 2.5px var(--bg),0 0 0 5px var(--ink);transform:scale(1.06)}
+  .ri .st{position:absolute;right:-4px;top:-4px;width:17px;height:17px;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--card);color:#fff}
+  .ri .st.done{background:var(--green)}
+  .ri .st.miss{background:var(--gray)}
+  .ri .st.prog{background:var(--gold);width:13px;height:13px;right:-2px;top:-2px}
+  .ri::after{content:attr(data-tip);position:absolute;left:calc(100% + 14px);top:50%;transform:translateY(-50%) translateX(-6px);white-space:nowrap;background:var(--ink);color:var(--on-ink);
+    font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+  @media (hover:hover){.ri:hover::after{opacity:1;transform:translateY(-50%)}}
+  @media (max-width:900px){
+    #rail{left:50%;top:auto;bottom:12px;transform:translateX(-50%);flex-direction:row;padding:8px;gap:6px;border-radius:18px;max-width:calc(100vw - 20px)}
+    #rail.in{animation:railUp .5s cubic-bezier(.2,1.2,.4,1) both}
+    @keyframes railUp{from{opacity:0;transform:translateX(-50%) translateY(30px)}}
+    #rail .sep{width:1px;height:24px;margin:0 2px}
+    .ri{width:42px;height:42px;border-radius:12px}
+    .ri.g svg{width:24px;height:24px}
+    .ri::after{display:none}
+    body.has-rail main{padding-bottom:110px}
+  }
   /* stats page */
   .stats-page{max-width:820px;margin:0 auto;padding-top:22px}
   .stats-page h1{font-family:var(--serif);font-weight:800;font-size:clamp(34px,6vw,48px);letter-spacing:-1px;margin:16px 0 4px}
@@ -333,6 +367,7 @@
 </header>
 <div class="bg-blobs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
 <main id="app"></main>
+<nav id="rail" aria-label="Switch game" hidden></nav>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
 <script>
@@ -630,7 +665,7 @@ function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.im
 const mem={};
 const store={
   get(k,d){try{const v=localStorage.getItem("hunch:"+k);if(v!==null)return JSON.parse(v);}catch(e){} return k in mem?JSON.parse(mem[k]):d;},
-  set(k,v){mem[k]=JSON.stringify(v);try{localStorage.setItem("hunch:"+k,mem[k]);}catch(e){}}
+  set(k,v){mem[k]=JSON.stringify(v);try{localStorage.setItem("hunch:"+k,mem[k]);}catch(e){}if(typeof renderRail==="function")renderRail();}
 };
 
 function fmtMoney(v){
@@ -777,6 +812,23 @@ window.addEventListener("pointermove",e=>{
   h.style.setProperty("--mx",((e.clientX/innerWidth-.5)*2).toFixed(3));h.style.setProperty("--my",((e.clientY/innerHeight-.5)*2).toFixed(3));
 });
 
+
+/* ============ GAME SWITCHER ============ */
+const railEl=document.getElementById("rail");
+const HOME_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>';
+const STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>';
+function renderRail(){
+  const h=location.hash.slice(1),onGame=GAMES.some(g=>g.id===h);
+  if(!onGame){railEl.hidden=true;railEl.classList.remove("in");document.body.classList.remove("has-rail");return;}
+  const wasHidden=railEl.hidden;
+  railEl.innerHTML=`<a class="ri u" href="#" data-tip="All games" aria-label="All games">${HOME_IC}</a><span class="sep"></span>`+
+    GAMES.map(g=>{const st=store.get(g.id+":"+DAY,null),s=dailyStatus(g);
+      const badge=s.done?(g.id==="boxoffice"?(st&&st.found?'<span class="st done">✓</span>':'<span class="st miss">✕</span>'):(st&&st.won?'<span class="st done">✓</span>':'<span class="st miss">✕</span>')):(s.label==="Continue"?'<span class="st prog"></span>':"");
+      return`<a class="ri g${g.id===h?" on":""}" href="#${g.id}" style="--c:${g.color}" data-tip="${g.name} · ${s.label}" aria-label="${g.name}, ${s.label}"${g.id===h?' aria-current="page"':""}>${IC[g.id]}${badge}</a>`;}).join("")+
+    `<span class="sep"></span><a class="ri u" href="#stats" data-tip="Your stats" aria-label="Your stats">${STATS_IC}</a>`;
+  railEl.hidden=false;document.body.classList.add("has-rail");
+  if(wasHidden){railEl.classList.remove("in");void railEl.offsetWidth;railEl.classList.add("in");}
+}
 /* ============ EFFECTS ============ */
 function fx(board,fresh,err){
   if(err){const f=board.querySelector("form");if(f){f.classList.remove("shake");void f.offsetWidth;f.classList.add("shake");}}
@@ -813,7 +865,9 @@ function countUp(root){
 
 function route(){
   closeModal();
+  cancelAnimationFrame(confetti.raf);const fxc=document.getElementById("fx");if(fxc)fxc.getContext("2d").clearRect(0,0,fxc.width,fxc.height);
   app.classList.remove("still");
+  renderRail();
   const h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);
   document.getElementById("statsBtn").classList.toggle("on",h==="stats");
   if(h==="stats"){practice=null;renderStats();}
@@ -822,7 +876,7 @@ function route(){
 }
 window.addEventListener("hashchange",route);
 // Keep every open tab in sync: redraw when another tab saves progress, or when this tab comes back into view.
-function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;app.classList.add("still");const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
+function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;app.classList.add("still");const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);renderRail();if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
 window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("hunch:"))refresh();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
 
