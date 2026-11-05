@@ -748,7 +748,7 @@ function renderHub(){
     <section class="hero">
       <div class="stage" aria-hidden="true">${cubes}</div>
       <h1 aria-label="Hunch">${[..."Hunch"].map((ch,i)=>`<span class="ch" style="--i:${i}">${ch}</span>`).join("")}</h1>
-      <p>Five daily guessing games. New puzzles every midnight.</p>
+      <p>Got a hunch?</p>
       <div class="chip"><span class="live"></span>Puzzle #${PNUM} · next one in <b id="heroCd">--:--:--</b></div>
     </section>
     <section class="grid">${GAMES.map((g,n)=>{const s=dailyStatus(g);return`
