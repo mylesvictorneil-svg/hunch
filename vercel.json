@@ -1,3 +1,13 @@
 {
-  "cleanUrls": true
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/blockbuster", "destination": "/blockbuster/", "permanent": false }
+  ],
+  "rewrites": [
+    {
+      "source": "/:path((?!api/|vendor/|blockbuster/).*)",
+      "has": [{ "type": "host", "value": "(www\\.)?blockbusterdaily\\.(com|net|app)" }],
+      "destination": "/blockbuster/:path"
+    }
+  ]
 }

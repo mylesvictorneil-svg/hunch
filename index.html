@@ -3,29 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Hunch — Daily Guessing Games</title>
+<title>Spec Sheet — The Daily Car Game</title>
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
 <link rel="icon" href="/favicon.ico" sizes="any">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#141312" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#0d0f13">
 <script>
   // Apply the saved theme (or the device setting) before anything draws, so there's no flash.
-  (function(){var t=null;try{t=localStorage.getItem("hunch:theme");}catch(e){}
-    if(t)t=JSON.parse(t);if(t!=="dark"&&t!=="light")t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+  (function(){var t=null;try{t=localStorage.getItem("ss:theme");}catch(e){}
+    if(t)t=JSON.parse(t);if(t!=="dark"&&t!=="light")t="dark";
     document.documentElement.dataset.theme=t;})();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,500..900;1,700..900&family=Chakra+Petch:wght@600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 <style>
   :root{
     --ink:#141414; --on-ink:#fff; --muted:#6c6a66; --text2:#3c3a36; --line:#e4e1da; --bg:#faf8f3; --card:#fff;
     --soft:#f1eee6; --field:#fff; --field-line:#cfcbc2; --placeholder:#9a978f; --empty:#c2bfb7; --locked:#e8e5dd;
     --overlay:rgba(20,20,20,.45); --shadow:rgba(0,0,0,.08);
     --green:#5fa463; --yellow:#d1b448; --gray:#a3a19c; --red:#d9604c; --gold:#F2C14E;
-    --serif:"Fraunces", Georgia, serif; --sans:"DM Sans", system-ui, -apple-system, sans-serif;
+    --serif:"Archivo", "Arial Black", sans-serif; --hud:"Chakra Petch", ui-monospace, monospace; --sans:"DM Sans", system-ui, -apple-system, sans-serif;
     color-scheme:light;
   }
   [data-theme="dark"]{
@@ -428,6 +427,143 @@
     *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition:none!important}
   }
 
+  /* ===== Spec Sheet theme ===== */
+  :root{--accent:#ff3b30;--cyan:#22d3ee}
+  .bg-blobs i:nth-child(1){background:#ff3b30}
+  .bg-blobs i:nth-child(2){background:#22d3ee}
+  .bg-blobs i:nth-child(3){background:#ffb000}
+  .bg-blobs i:nth-child(4){background:#7c3aed}
+  .ss-logo{display:flex;align-items:center;gap:6px;font-family:var(--serif);font-style:italic;font-weight:900;font-size:22px;letter-spacing:-.2px}
+  .ss-logo i{display:inline-block;width:18px;height:5px;border-radius:2px;background:linear-gradient(90deg,var(--accent) 0 45%,transparent 45% 55%,var(--accent) 55%);transform:skewX(-20deg)}
+  .ss-logo b:last-child{color:var(--accent)}
+  .card h2,.ss-card h2,.ghead h1,.answer-v,.stats-page h1,.sec-h,.gs-h h3{font-style:italic;font-weight:900;letter-spacing:-.5px}
+
+  .ss-hero{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:clamp(480px,76vh,780px);overflow:hidden;margin-bottom:28px;
+    background:radial-gradient(120% 90% at 70% 60%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 60%),linear-gradient(180deg,transparent,color-mix(in srgb,var(--bg) 70%,transparent))}
+  .ss-hero canvas.car3d{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:grab;touch-action:pan-y}
+  .ss-hero canvas.car3d:active{cursor:grabbing}
+  .ss-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:120px;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+  .ss-hero-ui{position:absolute;left:max(24px,calc(50vw - 520px));top:50%;transform:translateY(-50%);z-index:3;max-width:520px;pointer-events:none}
+  .ss-hero-ui a,.ss-hero-ui button{pointer-events:auto}
+  .ss-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--hud);font-weight:700;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:6px 12px;border-radius:999px;border:1px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent);backdrop-filter:blur(8px)}
+  .ss-kicker .live{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:ping 1.6s infinite;box-shadow:0 0 0 0 var(--accent)}
+  .ss-title{margin:14px 0 6px;font-family:var(--serif);font-style:italic;font-weight:900;line-height:.86;font-size:clamp(64px,10.5vw,150px);letter-spacing:-3px;display:flex;flex-direction:column}
+  .ss-title span{display:block}
+  .ss-title .w1{color:var(--ink)}
+  .ss-title .w2{color:transparent;-webkit-text-stroke:2.5px var(--accent);text-stroke:2.5px var(--accent);position:relative}
+  .ss-title .w2::after{content:"SHEET";position:absolute;left:0;top:0;color:var(--accent);clip-path:inset(0 100% 0 0);animation:fillIn 1.2s 3.4s cubic-bezier(.6,0,.2,1) forwards}
+  @keyframes fillIn{to{clip-path:inset(0 0 0 0)}}
+  .ss-sub{font-size:18px;color:var(--text2);margin:10px 0 22px;font-weight:500}
+  .ss-cta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .ss-cta{display:inline-flex;align-items:center;gap:12px;padding:15px 24px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;font-size:16px;text-decoration:none;box-shadow:0 10px 30px color-mix(in srgb,var(--accent) 45%,transparent);transition:transform .15s, box-shadow .2s;position:relative;overflow:hidden;transform:skewX(-8deg)}
+  .ss-cta>*{display:inline-block;transform:skewX(8deg)}
+  .ss-cta span{transition:transform .2s}
+  .ss-cta:hover{transform:skewX(-8deg) translateY(-2px);box-shadow:0 14px 40px color-mix(in srgb,var(--accent) 60%,transparent)}
+  .ss-cta:hover span{transform:skewX(8deg) translateX(4px)}
+  .ss-cta::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);animation:shine 3s ease-in-out infinite 4s}
+  .ss-replay{border:1.5px solid var(--line);background:color-mix(in srgb,var(--card) 70%,transparent);backdrop-filter:blur(8px);padding:12px 16px;border-radius:12px;font-weight:700;font-size:14px}
+  .ss-replay:hover{border-color:var(--ink)}
+  .ss-next{margin-top:16px;font-size:13px;color:var(--muted);font-weight:500}
+  .ss-next b{font-family:var(--hud);color:var(--ink);letter-spacing:.06em}
+  .ss-drag{position:absolute;right:24px;bottom:18px;z-index:3;margin:0;font-size:12px;color:var(--muted);font-weight:500;opacity:.7}
+  /* intro choreography: the text waits for the car to arrive */
+  .ss-hero.intro .ss-kicker{animation:fadeUp .6s 2.5s both}
+  .ss-hero.intro .ss-title .w1{animation:slam .7s 2.75s cubic-bezier(.2,1.3,.4,1) both}
+  .ss-hero.intro .ss-title .w2{animation:slam .7s 2.95s cubic-bezier(.2,1.3,.4,1) both}
+  .ss-hero.intro .ss-sub{animation:fadeUp .6s 3.2s both}
+  .ss-hero.intro .ss-cta-row{animation:fadeUp .6s 3.35s both}
+  .ss-hero.intro .ss-next{animation:fadeUp .6s 3.5s both}
+  @keyframes slam{0%{transform:translateX(-80px) skewX(-25deg);opacity:0;filter:blur(8px)}60%{filter:blur(0)}100%{transform:none;opacity:1}}
+  /* HUD */
+  .ss-hud{position:absolute;inset:18px;z-index:2;pointer-events:none}
+  .hud-c{position:absolute;width:26px;height:26px;border:2px solid color-mix(in srgb,var(--ink) 35%,transparent)}
+  .hud-c.tl{left:0;top:0;border-right:0;border-bottom:0}.hud-c.tr{right:0;top:0;border-left:0;border-bottom:0}
+  .hud-c.bl{left:0;bottom:0;border-right:0;border-top:0}.hud-c.br{right:0;bottom:0;border-left:0;border-top:0}
+  .hud-speed,.hud-gear{position:absolute;font-family:var(--hud);transition:opacity .5s, transform .5s;opacity:.35}
+  .hud-speed{right:28px;top:22px;text-align:right}
+  .hud-speed b{display:block;font-size:52px;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  .hud-speed span,.hud-gear span{font-size:11px;letter-spacing:.2em;color:var(--muted);font-weight:700}
+  .hud-gear{right:28px;top:110px;display:flex;align-items:baseline;gap:8px}
+  .hud-gear b{font-size:30px;color:var(--accent)}
+  .ss-hero.drifting .hud-speed,.ss-hero.drifting .hud-gear{opacity:1;transform:scale(1.04)}
+  .speedlines{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transition:opacity .4s}
+  .ss-hero.drifting .speedlines{opacity:.55}
+  .speedlines i{position:absolute;height:2px;width:160px;right:-200px;border-radius:2px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--ink) 55%,transparent));animation:streak .55s linear infinite}
+  .speedlines i:nth-child(1){top:8.0%;animation-delay:0.00s;width:120px}
+  .speedlines i:nth-child(2){top:14.4%;animation-delay:0.14s;width:157px}
+  .speedlines i:nth-child(3){top:20.8%;animation-delay:0.27s;width:194px}
+  .speedlines i:nth-child(4){top:27.2%;animation-delay:0.41s;width:231px}
+  .speedlines i:nth-child(5){top:33.6%;animation-delay:0.55s;width:268px}
+  .speedlines i:nth-child(6){top:40.0%;animation-delay:0.14s;width:145px}
+  .speedlines i:nth-child(7){top:46.4%;animation-delay:0.27s;width:182px}
+  .speedlines i:nth-child(8){top:52.8%;animation-delay:0.41s;width:219px}
+  .speedlines i:nth-child(9){top:59.2%;animation-delay:0.55s;width:256px}
+  .speedlines i:nth-child(10){top:65.6%;animation-delay:0.13s;width:133px}
+  .speedlines i:nth-child(11){top:72.0%;animation-delay:0.27s;width:170px}
+  .speedlines i:nth-child(12){top:78.4%;animation-delay:0.41s;width:207px}
+  .speedlines i:nth-child(13){top:84.8%;animation-delay:0.54s;width:244px}
+  .speedlines i:nth-child(14){top:91.2%;animation-delay:0.13s;width:121px}
+  @keyframes streak{from{transform:translateX(0)}to{transform:translateX(calc(-100vw - 400px))}}
+  .ss-hero.no3d{background:radial-gradient(80% 70% at 70% 60%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 65%)}
+  .ss-hero.no3d .ss-drag{display:none}
+
+  /* home grid */
+  .ss-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:stretch}
+  .ss-card{position:relative;border-radius:16px;overflow:hidden;text-decoration:none;padding:24px;display:flex;flex-direction:column;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out, box-shadow .25s;animation:cardIn .7s cubic-bezier(.2,1,.3,1) both;animation-delay:calc(var(--n)*90ms + .2s)}
+  .ss-card:hover{box-shadow:0 16px 40px var(--shadow)}
+  .ss-card::after{content:"";position:absolute;inset:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,0%),rgba(255,255,255,.25),transparent 55%);opacity:0;transition:opacity .25s;pointer-events:none}
+  .ss-card:hover::after{opacity:1}
+  .ss-card .tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;opacity:.75}
+  .ss-card h2{font-family:var(--serif);font-size:34px;margin:4px 0 8px;line-height:1}
+  .ss-card p{margin:0 0 18px;font-size:15px;line-height:1.45;opacity:.85;flex:1}
+  .ss-card .pill{align-self:flex-start}
+  .ss-card.feature{grid-column:span 2;flex-direction:row;align-items:center;gap:20px;color:#fff;
+    background:linear-gradient(135deg,#1b1d22,#2a1414 55%,#5a1410),repeating-linear-gradient(45deg,rgba(255,255,255,.03) 0 6px,transparent 6px 12px);border:1px solid #3a2a2a}
+  .ss-card.feature .fc-l{flex:1;display:flex;flex-direction:column;min-height:220px}
+  .ss-card.feature .pill{background:var(--accent);color:#fff}
+  .ss-card.feature .pill.done{background:transparent;border-color:#fff;color:#fff}
+  .ss-card.feature .fc-r{width:44%;max-width:300px}
+  .tach{width:100%;overflow:visible}
+  .tach .tach-arc{fill:none;stroke:rgba(255,255,255,.25);stroke-width:6;stroke-linecap:round}
+  .tach .tach-red{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round}
+  .tach line{stroke:rgba(255,255,255,.6);stroke-width:2}
+  .tach text{fill:rgba(255,255,255,.7);font-family:var(--hud);font-size:11px;font-weight:700;text-anchor:middle}
+  .tach .tach-needle{transform-origin:100px 105px;animation:revv 3.2s cubic-bezier(.5,0,.3,1) infinite}
+  .tach .tach-needle line{stroke:var(--accent);stroke-width:4;stroke-linecap:round}
+  .tach .tach-needle circle{fill:#fff}
+  .ss-card.feature:hover .tach-needle{animation-duration:1.1s}
+  @keyframes revv{0%{transform:rotate(-88deg)}35%{transform:rotate(70deg)}42%{transform:rotate(60deg)}48%{transform:rotate(78deg)}70%{transform:rotate(10deg)}100%{transform:rotate(-88deg)}}
+  .ss-card.xlink{grid-column:span 3;flex-direction:row;align-items:center;gap:18px;color:#fff;background:linear-gradient(120deg,#2a0f14,#6b1020 55%,#b4232c);padding:20px 24px}
+  .ss-card.xlink h2{font-size:26px;margin:0}
+  .ss-card.xlink p{margin:0}
+  .ss-card.xlink .pill{background:#fff;color:#141414;align-self:center}
+  .ss-card.xlink .xl-reel{position:absolute;right:-20px;top:-26px;font-size:110px;opacity:.12;animation:rot 14s linear infinite}
+  .ss-grid .card{animation-delay:calc(var(--n)*90ms + .2s)}
+  /* game pages: dashboard-style specs */
+  .spec .v{font-family:var(--hud);font-size:16.5px;font-weight:700;letter-spacing:.01em}
+  .spec:not(.locked){background:linear-gradient(160deg,var(--card),color-mix(in srgb,var(--card) 88%,var(--accent)))}
+  .spec.fresh{border-color:var(--accent)}
+
+  @media (max-width:820px){
+    .ss-grid{grid-template-columns:1fr}
+    .ss-card.feature,.ss-card.xlink{grid-column:auto}
+  }
+  @media (max-width:640px){
+    .ss-hero{height:min(700px,92vh)}
+    .ss-hero-ui{top:22px;transform:none;left:20px;right:20px}
+    .ss-title{font-size:clamp(58px,17vw,96px);letter-spacing:-2px}
+    .ss-sub{font-size:16px;margin:6px 0 14px}
+    .ss-cta{padding:13px 18px;font-size:15px}
+    .hud-speed{top:auto;bottom:28px;left:28px;right:auto;text-align:left}
+    .hud-speed b{font-size:34px}
+    .hud-gear{top:auto;bottom:34px;right:28px}
+    .ss-drag{display:none}
+    .ss-card.feature{flex-direction:column;align-items:stretch}
+    .ss-card.feature .fc-l{min-height:0}
+    .ss-card.feature .fc-r{width:100%;max-width:260px;align-self:center}
+    .ss-card.xlink{flex-direction:column;align-items:flex-start}
+    .ss-card.xlink .pill{align-self:flex-start}
+  }
   @media (max-width:640px){
     .date{display:none}
     .gs{grid-template-columns:1fr}
@@ -442,7 +578,7 @@
 </head>
 <body>
 <header class="top">
-  <a href="#" class="logo">Hunch<span></span></a>
+  <a href="#" class="logo ss-logo"><b>SPEC</b><i></i><b>SHEET</b></a>
   <div class="top-r">
     <span class="date" id="today"></span>
     <a href="#stats" class="tbtn" id="statsBtn" aria-label="Your stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Stats</a>
@@ -454,59 +590,10 @@
 <nav id="rail" aria-label="Switch game" hidden></nav>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 
+<script src="vendor/three.min.js"></script>
+<script src="specsheet3d.js"></script>
 <script>
 /* ============ DATA ============ */
-
-const ERA = [
-  {year:1969, clues:[
-    "The Concorde made its first test flight.",
-    "ARPANET sent the first message between two computers.",
-    "Sesame Street premiered on TV.",
-    "Hundreds of thousands gathered on a New York farm for the Woodstock festival.",
-    "Neil Armstrong walked on the Moon."]},
-  {year:2007, clues:[
-    "Amazon released the first Kindle e-reader.",
-    "Netflix started letting subscribers stream movies online.",
-    "The final Harry Potter book came out.",
-    "The U.S. housing bubble burst, setting off a financial crisis.",
-    "Steve Jobs unveiled the first iPhone."]},
-  {year:1989, clues:[
-    "Nintendo released the Game Boy.",
-    "The Simpsons debuted as a half-hour series.",
-    "Tim Berners-Lee proposed what became the World Wide Web.",
-    "Protesters filled Tiananmen Square in Beijing.",
-    "The Berlin Wall came down."]},
-  {year:2016, clues:[
-    "Hamilton won 11 Tony Awards.",
-    "The Chicago Cubs won their first World Series in 108 years.",
-    "Millions of people wandered around outside catching creatures in Pokémon Go.",
-    "The United Kingdom voted to leave the European Union.",
-    "Donald Trump was elected U.S. president for the first time."]},
-  {year:1997, clues:[
-    "Scientists announced Dolly the sheep, the first cloned mammal.",
-    "IBM's Deep Blue beat world chess champion Garry Kasparov in a match.",
-    "The first Harry Potter book was published in the UK.",
-    "Princess Diana died in a car crash in Paris.",
-    "Titanic hit theaters and became the biggest movie ever at the time."]},
-  {year:1985, clues:[
-    "Microsoft released Windows 1.0.",
-    "Coca-Cola launched 'New Coke' and quickly regretted it.",
-    "The Live Aid concerts were held in London and Philadelphia.",
-    "The Nintendo Entertainment System launched in the U.S.",
-    "Back to the Future was the year's biggest movie."]},
-  {year:2010, clues:[
-    "The Deepwater Horizon oil rig exploded in the Gulf of Mexico.",
-    "Spain won the FIFA World Cup in South Africa.",
-    "Inception came out in theaters.",
-    "Instagram launched on the App Store.",
-    "Apple released the very first iPad."]},
-  {year:1994, clues:[
-    "Sony released the first PlayStation in Japan.",
-    "Jeff Bezos founded a little online bookstore called Amazon.",
-    "Nelson Mandela became president of South Africa.",
-    "Friends premiered on NBC.",
-    "Disney's The Lion King opened in theaters."]}
-];
 
 const SOLD = [
   {emoji:"🏎️", item:"1962 Ferrari 250 GTO", where:"RM Sotheby's · Monterey · 2018", price:48405000,
@@ -558,182 +645,31 @@ const CARS = [
 const CAR_ALIASES = {"acura nsx":"Honda NSX","miata":"Mazda MX-5 Miata","mazda miata":"Mazda MX-5 Miata","mx5":"Mazda MX-5 Miata","model s":"Tesla Model S Plaid","plaid":"Tesla Model S Plaid","evo":"Mitsubishi Lancer Evolution","sti":"Subaru Impreza WRX STI","wrx":"Subaru Impreza WRX STI","corvette c8":"Chevrolet Corvette","mercedes sls":"Mercedes-Benz SLS AMG","gullwing":"Mercedes-Benz 300 SL Gullwing"};
 
 const SPECS = [
-  {car:"Ferrari F40", specs:[["Built","1987–1992"],["Engine","2.9L twin-turbo V8"],["Power","About 471 hp"],["Top speed","About 201 mph"],["Country","Italy"],["Claim to fame","The last new car approved by its company's founder before he died"]],
+  {car:"Ferrari F40", specs:[["Power","About 471 hp"],["0–60 mph","About 4 seconds"],["Engine","2.9L twin-turbo V8"],["Built","1987–1992"],["Country","Italy"],["Claim to fame","The last new car approved by its company's founder before he died"]],
    fact:"Often called the first production car to top 200 mph."},
-  {car:"McLaren F1", specs:[["Built","1992–1998, about 106 made"],["Engine","6.1L V12 supplied by BMW"],["Power","About 618 hp"],["Top speed","About 240 mph"],["Country","United Kingdom"],["Claim to fame","Three seats, with the driver in the middle"]],
+  {car:"McLaren F1", specs:[["Power","About 618 hp"],["0–60 mph","About 3.2 seconds"],["Engine","6.1L V12 supplied by BMW"],["Built","1992–1998, about 106 made"],["Country","United Kingdom"],["Claim to fame","Three seats, with the driver in the middle"]],
    fact:"It held the record for fastest production car for more than a decade."},
-  {car:"Toyota Supra", specs:[["Built","1993–2002 (4th generation)"],["Engine","3.0L twin-turbo inline-six (2JZ-GTE)"],["Power","About 320 hp in U.S. trim"],["Known for","Tuners push it past 1,000 hp"],["Country","Japan"],["Claim to fame","A tuner icon thanks to a 2001 street-racing movie"]],
+  {car:"Toyota Supra", specs:[["Power","About 320 hp in U.S. trim"],["0–60 mph","About 4.6 seconds"],["Engine","3.0L twin-turbo inline-six (2JZ-GTE)"],["Built","1993–2002 (4th generation)"],["Country","Japan"],["Claim to fame","A tuner icon thanks to a 2001 street-racing movie"]],
    fact:"Its 2JZ engine is one of the most famous tuning engines ever made."},
-  {car:"Lamborghini Countach", specs:[["Built","1974–1990"],["Engine","V12 mounted behind the driver"],["Design","Penned by Marcello Gandini at Bertone"],["Doors","Scissor doors that swing upward"],["Country","Italy"],["Claim to fame","The wedge-shaped poster car of the '80s"]],
+  {car:"Lamborghini Countach", specs:[["Power","About 375 to 455 hp, depending on version"],["0–60 mph","About 5 seconds"],["Engine","V12 mounted behind the driver"],["Built","1974–1990"],["Country","Italy"],["Claim to fame","The wedge-shaped, scissor-door poster car of the '80s"]],
    fact:"Its name comes from an expression of amazement in the Piedmontese dialect."},
-  {car:"Porsche Carrera GT", specs:[["Built","2004–2007, about 1,270 made"],["Engine","5.7L V10 developed from a racing program"],["Power","About 603 hp"],["Gearbox","Only offered with a 6-speed manual"],["Country","Germany"],["Claim to fame","Mid-engine supercar from the brand behind the 911"]],
+  {car:"Porsche Carrera GT", specs:[["Power","About 603 hp"],["0–60 mph","About 3.5 seconds"],["Engine","5.7L V10 developed from a racing program"],["Built","2004–2007, about 1,270 made"],["Country","Germany"],["Claim to fame","Mid-engine supercar, only offered with a manual, from the brand behind the 911"]],
    fact:"Its ceramic clutch is famously tricky to drive smoothly."},
-  {car:"Honda NSX", specs:[["Built","1990–2005 (1st generation)"],["Engine","3.0L V6 with VTEC"],["Power","About 270 hp"],["Body","First mass-produced car with an all-aluminum body"],["Country","Japan"],["Claim to fame","Ayrton Senna helped tune its handling"]],
+  {car:"Honda NSX", specs:[["Power","About 270 hp"],["0–60 mph","About 5.5 seconds"],["Engine","3.0L V6 with VTEC"],["Built","1990–2005 (1st generation)"],["Country","Japan"],["Claim to fame","Ayrton Senna helped tune its handling"]],
    fact:"In North America it was sold as the Acura NSX."},
-  {car:"Tesla Model S Plaid", specs:[["Released","2021"],["Motors","Three electric motors"],["Power","About 1,020 hp"],["0–60 mph","About 2 seconds"],["Country","USA"],["Claim to fame","A family sedan quicker than most hypercars, with an optional yoke wheel"]],
+  {car:"Tesla Model S Plaid", specs:[["Power","About 1,020 hp"],["0–60 mph","About 2 seconds"],["Motors","Three electric motors"],["Released","2021"],["Country","USA"],["Claim to fame","A family sedan quicker than most hypercars, with an optional yoke wheel"]],
    fact:"It was one of the quickest-accelerating production cars ever when it came out."},
-  {car:"Lexus LFA", specs:[["Built","2010–2012, 500 made"],["Engine","4.8L V10 that revs to 9,000 rpm"],["Power","About 553 hp"],["Body","Mostly carbon-fiber reinforced plastic"],["Country","Japan"],["Claim to fame","The luxury arm of Toyota's one-off supercar"]],
+  {car:"Lexus LFA", specs:[["Power","About 553 hp"],["0–60 mph","About 3.6 seconds"],["Engine","4.8L V10 that revs to 9,000 rpm"],["Built","2010–2012, 500 made"],["Country","Japan"],["Claim to fame","The luxury arm of Toyota's one-off supercar"]],
    fact:"Its engine revs so fast that it needed a digital tachometer to keep up."},
-  {car:"Mazda MX-5 Miata", specs:[["Released","1989"],["Engine","1.6L four-cylinder"],["Power","About 116 hp"],["Weight","Roughly 2,100 lb"],["Country","Japan"],["Claim to fame","A cheap two-seat roadster with pop-up headlights"]],
+  {car:"Mazda MX-5 Miata", specs:[["Power","About 116 hp"],["0–60 mph","About 9 seconds"],["Engine","1.6L four-cylinder"],["Released","1989"],["Country","Japan"],["Claim to fame","A cheap, light two-seat roadster with pop-up headlights"]],
    fact:"It's the best-selling two-seat sports car in history."},
-  {car:"Bugatti Veyron", specs:[["Released","2005"],["Engine","8.0L quad-turbo W16"],["Power","About 1,001 metric horsepower"],["Top speed","About 253 mph"],["Country","France"],["Claim to fame","Replaced by the Chiron in 2016"]],
+  {car:"Bugatti Veyron", specs:[["Power","About 1,001 metric horsepower"],["0–60 mph","About 2.5 seconds"],["Engine","8.0L quad-turbo W16"],["Released","2005"],["Country","France"],["Claim to fame","Topped 250 mph; replaced by the Chiron in 2016"]],
    fact:"At full speed it would empty its fuel tank in about 12 minutes."}
 ];
 
-// Movie database shared by Blurred and Blockbuster.
-// [title, year, approx worldwide gross ($M, incl. re-releases), director, genres, stars, flags: s = sequel, b = won Best Picture]
-const MOVIES = [
-  ["Avatar",2009,2923,"James Cameron","sci-fi action adventure","Sam Worthington|Zoe Saldaña",""],
-  ["Avengers: Endgame",2019,2799,"the Russo brothers","superhero action","Robert Downey Jr.|Chris Evans","s"],
-  ["Avatar: The Way of Water",2022,2320,"James Cameron","sci-fi action adventure","Sam Worthington|Zoe Saldaña","s"],
-  ["Titanic",1997,2264,"James Cameron","romance drama","Leonardo DiCaprio|Kate Winslet","b"],
-  ["Star Wars: The Force Awakens",2015,2071,"J.J. Abrams","sci-fi action adventure","Daisy Ridley|Harrison Ford","s"],
-  ["Avengers: Infinity War",2018,2052,"the Russo brothers","superhero action","Robert Downey Jr.|Chris Evans","s"],
-  ["Spider-Man: No Way Home",2021,1922,"Jon Watts","superhero action","Tom Holland|Zendaya","s"],
-  ["Inside Out 2",2024,1699,"Kelsey Mann","animated comedy family","Amy Poehler","s"],
-  ["Jurassic World",2015,1671,"Colin Trevorrow","sci-fi action adventure","Chris Pratt","s"],
-  ["The Avengers",2012,1521,"Joss Whedon","superhero action","Robert Downey Jr.|Chris Evans",""],
-  ["Furious 7",2015,1515,"James Wan","action","Vin Diesel|Paul Walker","s"],
-  ["Top Gun: Maverick",2022,1496,"Joseph Kosinski","action drama","Tom Cruise","s"],
-  ["Frozen II",2019,1453,"Chris Buck & Jennifer Lee","animated musical family fantasy","Kristen Bell|Idina Menzel","s"],
-  ["Barbie",2023,1446,"Greta Gerwig","comedy fantasy","Margot Robbie|Ryan Gosling",""],
-  ["The Super Mario Bros. Movie",2023,1362,"Aaron Horvath & Michael Jelenic","animated comedy adventure family","Chris Pratt|Anya Taylor-Joy",""],
-  ["Black Panther",2018,1349,"Ryan Coogler","superhero action","Chadwick Boseman",""],
-  ["Harry Potter and the Deathly Hallows – Part 2",2011,1342,"David Yates","fantasy adventure","Daniel Radcliffe|Emma Watson","s"],
-  ["Deadpool & Wolverine",2024,1338,"Shawn Levy","superhero action comedy","Ryan Reynolds|Hugh Jackman","s"],
-  ["Frozen",2013,1290,"Chris Buck & Jennifer Lee","animated musical family fantasy","Kristen Bell|Idina Menzel",""],
-  ["Minions",2015,1159,"Pierre Coffin & Kyle Balda","animated comedy family","Sandra Bullock","s"],
-  ["The Lord of the Rings: The Return of the King",2003,1140,"Peter Jackson","fantasy adventure action","Elijah Wood|Viggo Mortensen","sb"],
-  ["Jurassic Park",1993,1100,"Steven Spielberg","sci-fi adventure","Sam Neill|Jeff Goldblum",""],
-  ["Joker",2019,1079,"Todd Phillips","thriller drama crime","Joaquin Phoenix",""],
-  ["Toy Story 4",2019,1073,"Josh Cooley","animated comedy family","Tom Hanks|Tim Allen","s"],
-  ["Toy Story 3",2010,1067,"Lee Unkrich","animated comedy family","Tom Hanks|Tim Allen","s"],
-  ["Pirates of the Caribbean: Dead Man's Chest",2006,1066,"Gore Verbinski","action fantasy adventure","Johnny Depp|Orlando Bloom","s"],
-  ["Finding Dory",2016,1029,"Andrew Stanton","animated comedy family","Ellen DeGeneres","s"],
-  ["Zootopia",2016,1025,"Byron Howard & Rich Moore","animated comedy family","Ginnifer Goodwin|Jason Bateman",""],
-  ["Harry Potter and the Sorcerer's Stone",2001,1020,"Chris Columbus","fantasy adventure family","Daniel Radcliffe|Emma Watson",""],
-  ["The Dark Knight",2008,1006,"Christopher Nolan","superhero action thriller crime","Christian Bale|Heath Ledger","s"],
-  ["Oppenheimer",2023,976,"Christopher Nolan","drama","Cillian Murphy","b"],
-  ["The Lion King",1994,968,"Roger Allers & Rob Minkoff","animated musical family drama","Matthew Broderick|James Earl Jones",""],
-  ["Jumanji: Welcome to the Jungle",2017,962,"Jake Kasdan","action comedy adventure","Dwayne Johnson|Kevin Hart","s"],
-  ["Finding Nemo",2003,941,"Andrew Stanton","animated comedy family adventure","Albert Brooks|Ellen DeGeneres",""],
-  ["Shrek 2",2004,932,"Andrew Adamson","animated comedy family fantasy","Mike Myers|Eddie Murphy","s"],
-  ["Inception",2010,837,"Christopher Nolan","sci-fi action thriller","Leonardo DiCaprio",""],
-  ["Independence Day",1996,817,"Roland Emmerich","sci-fi action","Will Smith|Jeff Goldblum",""],
-  ["Coco",2017,814,"Lee Unkrich","animated musical family fantasy","Anthony Gonzalez",""],
-  ["E.T. the Extra-Terrestrial",1982,793,"Steven Spielberg","sci-fi family adventure","Henry Thomas|Drew Barrymore",""],
-  ["Star Wars",1977,775,"George Lucas","sci-fi action adventure","Mark Hamill|Harrison Ford",""],
-  ["Guardians of the Galaxy",2014,773,"James Gunn","superhero action comedy sci-fi","Chris Pratt|Zoe Saldaña",""],
-  ["Wicked",2024,756,"Jon M. Chu","musical fantasy","Cynthia Erivo|Ariana Grande",""],
-  ["The Matrix Reloaded",2003,741,"the Wachowskis","sci-fi action","Keanu Reeves","s"],
-  ["Up",2009,735,"Pete Docter","animated comedy family adventure","Ed Asner",""],
-  ["Interstellar",2014,730,"Christopher Nolan","sci-fi drama adventure","Matthew McConaughey|Anne Hathaway",""],
-  ["Gravity",2013,723,"Alfonso Cuarón","sci-fi thriller","Sandra Bullock|George Clooney",""],
-  ["Dune: Part Two",2024,714,"Denis Villeneuve","sci-fi action adventure","Timothée Chalamet|Zendaya","s"],
-  ["Transformers",2007,709,"Michael Bay","sci-fi action","Shia LaBeouf",""],
-  ["The Hunger Games",2012,694,"Gary Ross","sci-fi action adventure","Jennifer Lawrence",""],
-  ["Moana",2016,687,"Ron Clements & John Musker","animated musical family adventure","Auli'i Cravalho|Dwayne Johnson",""],
-  ["Forrest Gump",1994,678,"Robert Zemeckis","drama comedy romance","Tom Hanks","b"],
-  ["The Sixth Sense",1999,673,"M. Night Shyamalan","thriller horror drama","Bruce Willis",""],
-  ["The Incredibles",2004,632,"Brad Bird","animated superhero action family","Craig T. Nelson|Holly Hunter",""],
-  ["The Martian",2015,630,"Ridley Scott","sci-fi drama adventure","Matt Damon",""],
-  ["Ratatouille",2007,624,"Brad Bird","animated comedy family","Patton Oswalt",""],
-  ["Men in Black",1997,589,"Barry Sonnenfeld","sci-fi action comedy","Will Smith|Tommy Lee Jones",""],
-  ["Iron Man",2008,585,"Jon Favreau","superhero action","Robert Downey Jr.",""],
-  ["Ready Player One",2018,583,"Steven Spielberg","sci-fi action adventure","Tye Sheridan",""],
-  ["Monsters, Inc.",2001,577,"Pete Docter","animated comedy family","Billy Crystal|John Goodman",""],
-  ["Armageddon",1998,553,"Michael Bay","sci-fi action","Bruce Willis|Ben Affleck",""],
-  ["Dunkirk",2017,527,"Christopher Nolan","war drama action","Fionn Whitehead|Tom Hardy",""],
-  ["WALL-E",2008,521,"Andrew Stanton","animated sci-fi family","Ben Burtt",""],
-  ["Terminator 2: Judgment Day",1991,520,"James Cameron","sci-fi action","Arnold Schwarzenegger|Linda Hamilton","s"],
-  ["Twister",1996,495,"Jan de Bont","action thriller","Helen Hunt|Bill Paxton",""],
-  ["Shrek",2001,488,"Andrew Adamson & Vicky Jenson","animated comedy family fantasy","Mike Myers|Eddie Murphy",""],
-  ["Saving Private Ryan",1998,482,"Steven Spielberg","war drama action","Tom Hanks|Matt Damon",""],
-  ["Home Alone",1990,476,"Chris Columbus","comedy family","Macaulay Culkin",""],
-  ["Jaws",1975,476,"Steven Spielberg","thriller adventure","Roy Scheider|Richard Dreyfuss",""],
-  ["La La Land",2016,472,"Damien Chazelle","musical romance drama","Ryan Gosling|Emma Stone",""],
-  ["The Matrix",1999,467,"the Wachowskis","sci-fi action","Keanu Reeves|Laurence Fishburne",""],
-  ["Gladiator",2000,465,"Ridley Scott","action drama","Russell Crowe","b"],
-  ["Signs",2002,408,"M. Night Shyamalan","sci-fi thriller horror","Mel Gibson",""],
-  ["Dune",2021,407,"Denis Villeneuve","sci-fi action adventure","Timothée Chalamet|Zendaya",""],
-  ["Spirited Away",2001,395,"Hayao Miyazaki","animated fantasy family","Rumi Hiiragi",""],
-  ["Toy Story",1995,394,"John Lasseter","animated comedy family","Tom Hanks|Tim Allen",""],
-  ["The Wolf of Wall Street",2013,392,"Martin Scorsese","comedy crime drama","Leonardo DiCaprio",""],
-  ["Raiders of the Lost Ark",1981,390,"Steven Spielberg","action adventure","Harrison Ford",""],
-  ["Spider-Man: Into the Spider-Verse",2018,384,"Bob Persichetti, Peter Ramsey & Rodney Rothman","animated superhero action","Shameik Moore",""],
-  ["Back to the Future",1985,381,"Robert Zemeckis","sci-fi comedy adventure","Michael J. Fox|Christopher Lloyd",""],
-  ["Mad Max: Fury Road",2015,380,"George Miller","action sci-fi adventure","Tom Hardy|Charlize Theron","s"],
-  ["Edge of Tomorrow",2014,370,"Doug Liman","sci-fi action","Tom Cruise|Emily Blunt",""],
-  ["Tenet",2020,365,"Christopher Nolan","sci-fi action thriller","John David Washington|Robert Pattinson",""],
-  ["Minority Report",2002,358,"Steven Spielberg","sci-fi action thriller","Tom Cruise",""],
-  ["Top Gun",1986,357,"Tony Scott","action drama","Tom Cruise",""],
-  ["Catch Me If You Can",2002,352,"Steven Spielberg","crime comedy drama","Leonardo DiCaprio|Tom Hanks",""],
-  ["Back to the Future Part II",1989,332,"Robert Zemeckis","sci-fi comedy adventure","Michael J. Fox|Christopher Lloyd","s"],
-  ["Free Guy",2021,331,"Shawn Levy","action comedy sci-fi","Ryan Reynolds",""],
-  ["Close Encounters of the Third Kind",1977,306,"Steven Spielberg","sci-fi drama","Richard Dreyfuss",""],
-  ["Ghostbusters",1984,295,"Ivan Reitman","comedy sci-fi fantasy","Bill Murray|Dan Aykroyd",""],
-  ["The Silence of the Lambs",1991,273,"Jonathan Demme","thriller horror crime","Jodie Foster|Anthony Hopkins","b"],
-  ["The Truman Show",1998,264,"Peter Weir","comedy drama","Jim Carrey",""],
-  ["The Fifth Element",1997,263,"Luc Besson","sci-fi action","Bruce Willis|Milla Jovovich",""],
-  ["Parasite",2019,262,"Bong Joon-ho","thriller drama comedy","Song Kang-ho","b"],
-  ["Us",2019,256,"Jordan Peele","horror thriller","Lupita Nyong'o",""],
-  ["Get Out",2017,255,"Jordan Peele","horror thriller","Daniel Kaluuya",""],
-  ["The Godfather",1972,250,"Francis Ford Coppola","crime drama","Marlon Brando|Al Pacino","b"],
-  ["Howl's Moving Castle",2004,236,"Hayao Miyazaki","animated fantasy family romance","Chieko Baisho",""],
-  ["Pulp Fiction",1994,214,"Quentin Tarantino","crime thriller","John Travolta|Samuel L. Jackson",""],
-  ["Arrival",2016,203,"Denis Villeneuve","sci-fi drama","Amy Adams",""],
-  ["Jaws 2",1978,187,"Jeannot Szwarc","thriller","Roy Scheider","s"],
-  ["Alien",1979,185,"Ridley Scott","sci-fi horror","Sigourney Weaver",""],
-  ["Nope",2022,172,"Jordan Peele","horror sci-fi","Daniel Kaluuya|Keke Palmer",""],
-  ["Everything Everywhere All at Once",2022,143,"Daniel Kwan & Daniel Scheinert","sci-fi comedy action","Michelle Yeoh","b"],
-  ["Mean Girls",2004,130,"Mark Waters","comedy","Lindsay Lohan|Rachel McAdams",""],
-  ["The Shawshank Redemption",1994,73,"Frank Darabont","drama crime","Tim Robbins|Morgan Freeman",""],
-  ["Groundhog Day",1993,71,"Harold Ramis","comedy fantasy romance","Bill Murray",""],
-  ["Ferris Bueller's Day Off",1986,70,"John Hughes","comedy","Matthew Broderick",""],
-  ["The Breakfast Club",1985,51,"John Hughes","comedy drama","Emilio Estevez|Molly Ringwald",""],
-  ["Whiplash",2014,49,"Damien Chazelle","drama","Miles Teller|J.K. Simmons",""],
-  ["Blade Runner",1982,41,"Ridley Scott","sci-fi thriller","Harrison Ford",""],
-  ["Memento",2000,40,"Christopher Nolan","thriller crime","Guy Pearce",""]
-].map(([name,year,g,dir,genres,stars,f])=>({name,year,g,dir,genres:genres.split(" "),stars:stars.split("|"),seq:f.includes("s"),bp:f.includes("b")}));
-
-// Blurred: five hints per movie, vaguest first, most obvious last.
-const BLURRED = [
-  {movie:"The Matrix", hints:["A '90s sci-fi movie","An action film famous for its slow-motion 'bullet time' effects","Directed by the Wachowskis","Stars Keanu Reeves","A hacker learns reality is a computer simulation and has to choose between a red pill and a blue pill"]},
-  {movie:"Finding Nemo", hints:["A 2000s animated movie","Almost the whole story takes place underwater","A Pixar film directed by Andrew Stanton","Features a very forgetful fish voiced by Ellen DeGeneres","A clownfish crosses the ocean to rescue his son from a dentist's fish tank"]},
-  {movie:"Jaws", hints:["A '70s thriller","Often called the first summer blockbuster","Directed by Steven Spielberg","Set in the beach town of Amity Island","A great white shark attacks swimmers, and the police chief decides they need a bigger boat"]},
-  {movie:"E.T. the Extra-Terrestrial", hints:["An '80s sci-fi movie","A family film about friendship and saying goodbye","Directed by Steven Spielberg","A boy hides a strange visitor in his closet and lures him with Reese's Pieces","A stranded alien wants to phone home, and a bike flies across the moon"]},
-  {movie:"Forrest Gump", hints:["A '90s drama that won Best Picture","The story spans about thirty years of American history","Directed by Robert Zemeckis","Stars Tom Hanks","A kind man from Alabama tells his life story to strangers on a bus-stop bench, box of chocolates included"]},
-  {movie:"Home Alone", hints:["A 1990 comedy","Set at Christmastime in suburban Chicago","Written by John Hughes","Two burglars named Harry and Marv get outsmarted with booby traps","An 8-year-old is accidentally left behind when his family flies to Paris"]},
-  {movie:"The Lion King", hints:["A '90s animated movie","A musical with songs by Elton John","Set on the African savanna","A villainous uncle named Scar takes the throne","A lion cub runs away after his father dies, then returns to reclaim Pride Rock"]},
-  {movie:"Gladiator", hints:["A 2000 action movie that won Best Picture","A historical epic set in ancient Rome","Directed by Ridley Scott","Stars Russell Crowe","A betrayed general is sold into slavery and fights in the Colosseum for revenge"]},
-  {movie:"Shrek", hints:["An early-2000s animated comedy","Won the first-ever Oscar for Best Animated Feature","Pokes fun at classic fairy tales","Features a talking donkey voiced by Eddie Murphy","A grumpy green ogre sets out to rescue Princess Fiona"]}
-];
-
-// Blockbuster: each round adds a criterion. Rounds 1–4 are checked against MOVIES;
-// round 5 is a final clue only the Blockbuster fits.
-const RULE = {
-  genre:g=>({label:`It's ${/^[aeiou]/.test(g)?"an":"a"} ${g} movie`,test:m=>m.genres.includes(g)}),
-  since:y=>({label:`Released in ${y} or later`,test:m=>m.year>=y}),
-  before:y=>({label:`Released before ${y}`,test:m=>m.year<y}),
-  decade:d=>({label:`Released in the ${d}s`,test:m=>m.year>=d&&m.year<d+10}),
-  gross:x=>({label:`Made over ${x>=1000?"$"+x/1000+" billion":"$"+x+" million"} worldwide`,test:m=>m.g>x}),
-  dir:n=>({label:`Directed by ${n}`,test:m=>m.dir===n}),
-  star:n=>({label:`Stars ${n}`,test:m=>m.stars.includes(n)}),
-  sequel:()=>({label:"It's a sequel",test:m=>m.seq}),
-  bp:()=>({label:"Won the Oscar for Best Picture",test:m=>m.bp})
-};
-const BLOCKBUSTERS = [
-  {movie:"Inception", rules:[RULE.genre("sci-fi"),RULE.since(2000),RULE.gross(500),RULE.dir("Christopher Nolan")], final:"A crew of thieves breaks into people's dreams to plant an idea."},
-  {movie:"Titanic", rules:[RULE.genre("drama"),RULE.decade(1990),RULE.gross(400),RULE.bp()], final:"A luxury ocean liner hits an iceberg on its first voyage."},
-  {movie:"Jurassic Park", rules:[RULE.genre("sci-fi"),RULE.before(2000),RULE.gross(500),RULE.dir("Steven Spielberg")], final:"Cloned dinosaurs escape at an island theme park."},
-  {movie:"The Dark Knight", rules:[RULE.genre("action"),RULE.sequel(),RULE.decade(2000),RULE.gross(900)], final:"A chaotic, clown-faced criminal pushes Gotham City to the brink."},
-  {movie:"Get Out", rules:[RULE.genre("thriller"),RULE.decade(2010),RULE.genre("horror"),RULE.dir("Jordan Peele")], final:"A weekend meeting the girlfriend's parents turns sinister, with a hypnotic teacup."},
-  {movie:"Spirited Away", rules:[RULE.genre("animated"),RULE.genre("fantasy"),RULE.before(2010),RULE.dir("Hayao Miyazaki")], final:"A girl works at a bathhouse for spirits after her parents turn into pigs."},
-  {movie:"Back to the Future", rules:[RULE.genre("comedy"),RULE.decade(1980),RULE.genre("sci-fi"),RULE.dir("Robert Zemeckis")], final:"A teenager travels back to 1955 in a DeLorean."},
-  {movie:"Toy Story 3", rules:[RULE.genre("animated"),RULE.sequel(),RULE.gross(1000),RULE.star("Tom Hanks")], final:"Andy leaves for college and his toys end up at a daycare."},
-  {movie:"Top Gun: Maverick", rules:[RULE.genre("action"),RULE.since(2020),RULE.sequel(),RULE.gross(1400)], final:"A veteran Navy pilot comes back to train a new class of hotshot aviators."}
-];
-const BB_BONUS=[2500,2000,1500,1000,500];
+/* ============ SITE LINKS ============ */
+// Update this once Blockbuster Daily has its own domain.
+const BBD_URL="/blockbuster/";
 
 /* ============ HELPERS ============ */
 const LAUNCH = new Date(2026,10,1);
@@ -748,8 +684,8 @@ function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.im
 
 const mem={};
 const store={
-  get(k,d){try{const v=localStorage.getItem("hunch:"+k);if(v!==null)return JSON.parse(v);}catch(e){} return k in mem?JSON.parse(mem[k]):d;},
-  set(k,v){mem[k]=JSON.stringify(v);try{localStorage.setItem("hunch:"+k,mem[k]);}catch(e){}if(typeof renderRail==="function")renderRail();}
+  get(k,d){try{const v=localStorage.getItem("ss:"+k);if(v!==null)return JSON.parse(v);}catch(e){} return k in mem?JSON.parse(mem[k]):d;},
+  set(k,v){mem[k]=JSON.stringify(v);try{localStorage.setItem("ss:"+k,mem[k]);}catch(e){}if(typeof renderRail==="function")renderRail();}
 };
 
 function fmtMoney(v){
@@ -768,7 +704,7 @@ function toast(msg){const t=document.createElement("div");t.className="toast";t.
 const CAR_KEYS={};
 CARS.forEach(c=>{CAR_KEYS[norm(c.name)]=c;if(!CAR_KEYS[norm(c.model)])CAR_KEYS[norm(c.model)]=c;});
 Object.entries(CAR_ALIASES).forEach(([k,v])=>CAR_KEYS[norm(k)]=CARS.find(c=>c.name===v));
-const MOVIE_KEYS={}; MOVIES.forEach(m=>MOVIE_KEYS[norm(m.name)]=m);
+
 
 /* ============ ICONS ============ */
 const IC={
@@ -779,25 +715,18 @@ const IC={
   boxoffice:'<svg class="ic-boxoffice" viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linejoin="round"><path d="M5 13h38v7a4 4 0 0 0 0 8v7H5v-7a4 4 0 0 0 0-8z"/><path d="M31 15v18" stroke-dasharray="3 4" stroke-linecap="round"/><path class="star" d="m17 19 2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z" fill="#141414" stroke-width="1"/></svg>'
 };
 
-const GAMES=[
+const GAMES_ALL_=[
   {id:"era",name:"Era",tag:"Guess the year",color:"#F2C14E",blurb:"Five clues from one year in history. Name the year in six guesses.",off:0},
   {id:"sold",name:"Sold",tag:"Price is right",color:"#86C98A",blurb:"A real auction lot. Guess what it sold for, with color-coded higher or lower hints.",off:3},
-  {id:"specs",name:"Spec Sheet",tag:"Guess the car",color:"#F27A62",blurb:"Specs are revealed one at a time. Name the car.",off:5},
+  {id:"specs",name:"Spec Sheet",tag:"Guess the car",color:"#ff5a45",blurb:"Specs are revealed one at a time. Name the car.",off:5},
   {id:"blurred",name:"Blurred",tag:"Guess the movie",color:"#AE96DE",blurb:"Five rounds, five hints, from vague to obvious. Name the movie.",off:2},
   {id:"boxoffice",name:"Blockbuster",tag:"Narrow it down",color:"#6AA8EC",blurb:"Name a movie that fits the clues as they get more specific. Land the Blockbuster for big points.",off:4}
 ];
 
+const GAMES=GAMES_ALL_.filter(g=>["specs","sold"].includes(g.id)).sort((a,b)=>a.id==="specs"?-1:1);
+
 /* ============ GAME DEFINITIONS ============ */
 const DEFS={
-  era:{
-    data:ERA, how:"Guess the year in 6 tries. Each wrong guess unlocks another clue. 🟨 means you're within 3 years.",
-    placeholder:"Type a year, e.g. 1994", inputmode:"numeric",
-    clues:(p,step)=>`<ol class="cluelist">${p.clues.map((c,i)=>i<=step?`<li>${esc(c)}</li>`:`<li class="locked">Unlocks after guess ${i}</li>`).join("")}</ol>`,
-    parse(s){const y=parseInt(s.replace(/[^0-9]/g,""),10);if(!y||y<1800||y>2026)return{error:"Enter a year between 1800 and 2026."};return{value:y};},
-    label:v=>String(v),
-    judge(v,p){const d=p.year-v;if(d===0)return{s:"hit",note:"Correct"};return{s:Math.abs(d)<=3?"close":"miss",note:d>0?"↑ Later":"↓ Earlier"};},
-    answer:p=>String(p.year)
-  },
   sold:{
     data:SOLD, how:"Guess the final sale price, fees included, in 6 tries. 🟩 is within 5%, 🟨 within 20%, ⬜ within 80%, and 🟥 is way off. The arrow tells you to go higher or lower. Shorthand like 2.5m or 40k works.",
     placeholder:"e.g. 12m, $850,000, 1.2b", inputmode:"text",
@@ -821,20 +750,6 @@ const DEFS={
     judge(v,p){if(v===p.car)return{s:"hit",note:"Correct"};const a=CARS.find(c=>c.name===p.car),g=CARS.find(c=>c.name===v);return a.make===g.make?{s:"close",note:"Right make"}:{s:"miss",note:"Wrong make"};},
     answer:p=>p.car, reveal:p=>`<p>${esc(p.fact)}</p>`
   },
-  blurred:{
-    data:BLURRED, max:5, how:"Name the movie in 5 rounds. Each round adds a hint, from vague to obvious. 🟨 means your guess is from the right decade.",
-    placeholder:"Start typing a movie…", options:MOVIES.map(m=>m.name),
-    clues:(p,step)=>`<ol class="cluelist">${p.hints.map((h,i)=>i<=step?`<li>${esc(h)}</li>`:`<li class="locked">Hint ${i+1} unlocks in round ${i+1}</li>`).join("")}</ol>`,
-    parse(s){const m=MOVIE_KEYS[norm(s)];return m?{value:m.name}:{error:"That movie isn't on the list. Pick one of the suggestions."};},
-    label:v=>v,
-    judge(v,p){
-      if(v===p.movie)return{s:"hit",note:"Correct"};
-      const a=MOVIES.find(m=>m.name===p.movie).year,g=MOVIES.find(m=>m.name===v).year;
-      const dir=a>g?"↑ Newer":a<g?"↓ Older":"Same year";
-      return{s:Math.floor(a/10)===Math.floor(g/10)?"close":"miss",note:dir};
-    },
-    answer:p=>p.movie, reveal:p=>{const m=MOVIES.find(x=>x.name===p.movie);return`<p>${m.year} · directed by ${esc(m.dir)}</p>`;}
-  }
 };
 const EMO={hit:"🟩",close:"🟨",miss:"⬜",far:"🟥"};
 
@@ -850,40 +765,59 @@ function dailyStatus(g){
   if(g.id==="boxoffice")return{label:st.found?`Blockbuster · ${st.score.toLocaleString()} pts`:`${st.score.toLocaleString()} pts`,done:true};
   return{label:st.won?`Solved in ${st.guesses.length}`:"Missed",done:true};
 }
-const CUBES=[
-  {id:"era",x:"4%",y:"12%",s:78,z:26,d:17,b:6.5,rx:-24},
-  {id:"sold",x:"15%",y:"60%",s:50,z:14,d:12,b:5.5,rx:-10,hide:1},
-  {id:"specs",x:"86%",y:"8%",s:66,z:22,d:19,b:7,rx:-32},
-  {id:"blurred",x:"77%",y:"62%",s:54,z:16,d:14,b:6,rx:-14,hide:1},
-  {id:"boxoffice",x:"67%",y:"7%",s:42,z:10,d:11,b:5,rx:-18}
-];
 const canHover=()=>matchMedia("(hover:hover) and (pointer:fine)").matches&&!matchMedia("(prefers-reduced-motion: reduce)").matches;
+let heroIntroDone=false;
 function renderHub(){
-  const color=id=>GAMES.find(g=>g.id===id).color;
-  const cubes=CUBES.map((c,k)=>`<div class="float${c.hide?" hide-sm":""}" style="--x:${c.x};--y:${c.y};--z:${c.z};--k:${k}">
-      <div class="bob" style="--b:${c.b}s"><div class="cube" style="--s:${c.s}px;--d:${c.d}s;--rx0:${c.rx}deg;--c:${color(c.id)}">${Array(6).fill(`<div class="f">${IC[c.id]}</div>`).join("")}</div>
-      <div class="shadow" style="--s:${c.s}px"></div></div></div>`).join("");
+  const spec=GAMES.find(g=>g.id==="specs"),sold=GAMES.find(g=>g.id==="sold"),ss=dailyStatus(spec),so=dailyStatus(sold);
+  const tach=`<svg class="tach" viewBox="0 0 200 120" aria-hidden="true"><path class="tach-arc" d="M20 105a80 80 0 0 1 160 0"/><path class="tach-red" d="M164 62a80 80 0 0 1 16 43"/>
+    ${Array.from({length:9},(_,i)=>{const a=Math.PI*(1-i/8),x1=100+Math.cos(a)*80,y1=105-Math.sin(a)*80,x2=100+Math.cos(a)*68,y2=105-Math.sin(a)*68;return`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/><text x="${(100+Math.cos(a)*56).toFixed(1)}" y="${(109-Math.sin(a)*56).toFixed(1)}">${i}</text>`;}).join("")}
+    <g class="tach-needle"><line x1="100" y1="105" x2="100" y2="35"/><circle cx="100" cy="105" r="7"/></g></svg>`;
   app.innerHTML=`
-    <section class="hero">
-      <div class="stage" aria-hidden="true">${cubes}</div>
-      <h1 aria-label="Hunch">${[..."Hunch"].map((ch,i)=>`<span class="ch" style="--i:${i}">${ch}</span>`).join("")}</h1>
-      <p>Got a hunch?</p>
-      <div class="chip"><span class="live"></span>Puzzle #${PNUM} · next one in <b id="heroCd">--:--:--</b></div>
+    <section class="ss-hero" id="ssHero">
+      <div class="speedlines" aria-hidden="true">${"<i></i>".repeat(14)}</div>
+      <div class="ss-hud" aria-hidden="true"><div class="hud-c tl"></div><div class="hud-c tr"></div><div class="hud-c bl"></div><div class="hud-c br"></div>
+        <div class="hud-speed"><b id="hudMph">000</b><span>MPH</span></div><div class="hud-gear"><span>GEAR</span><b id="hudGear">N</b></div></div>
+      <div class="ss-hero-ui">
+        <div class="ss-kicker"><span class="live"></span>The daily car game · #${PNUM}</div>
+        <h1 class="ss-title" aria-label="Spec Sheet"><span class="w1">SPEC</span><span class="w2">SHEET</span></h1>
+        <p class="ss-sub">Read the specs. Name the car.</p>
+        <div class="ss-cta-row"><a class="ss-cta" href="#specs">${ss.done?ss.label:ss.label==="Continue"?"Continue today's car":"Play today's car"}<span>→</span></a>
+          <button class="ss-replay" id="ssReplay" title="Drift again">↻ Drift again</button></div>
+        <div class="ss-next">Next car in <b id="heroCd">--:--:--</b></div>
+      </div>
+      <p class="ss-drag">Drag the car to spin it</p>
     </section>
-    <a class="pbanner" href="#jackpot"><div class="pb-av">${["M","A","J","K"].map((c,i)=>`<span style="--c:${["#F2C14E","#86C98A","#6AA8EC","#F08BB6"][i]};--i:${i}">${c}</span>`).join("")}</div>
-      <div><span class="new">NEW · MULTIPLAYER</span><h2>Jackpot</h2><p>Play live with up to 8 friends on their phones or computers. Name anything that fits the clues, and race to hit the Jackpot.</p></div>
-      <span class="pill">Start a game</span></a>
-    <section class="grid">${GAMES.map((g,n)=>{const s=dailyStatus(g);return`
-      <a class="card" href="#${g.id}" style="--c:${g.color};--n:${n}">
-        <div class="band">${IC[g.id]}</div>
-        <div class="body"><h2>${g.name}</h2><div class="tag">${g.tag}</div><p>${g.blurb}</p>
-          <div class="foot"><span class="pill ${s.done?"done":""}" style="--n:${n}">${s.label}</span><span class="num">#${PNUM}</span></div></div>
-      </a>`;}).join("")}</section>
+    <section class="ss-grid">
+      <a class="ss-card feature" href="#specs" style="--c:${spec.color};--n:0">
+        <div class="fc-l"><div class="tag">Main game · #${PNUM}</div><h2>Spec Sheet</h2><p>Horsepower first, then 0–60, engine and more. Six guesses to name the car.</p>
+          <span class="pill ${ss.done?"done":""}">${ss.label}</span></div>
+        <div class="fc-r">${tach}</div>
+      </a>
+      <a class="card" href="#sold" style="--c:${sold.color};--n:1">
+        <div class="band">${IC.sold}</div>
+        <div class="body"><h2>Sold</h2><div class="tag">${sold.tag}</div><p>${sold.blurb}</p>
+          <div class="foot"><span class="pill ${so.done?"done":""}" style="--n:1">${so.label}</span><span class="num">#${PNUM}</span></div></div>
+      </a>
+      <a class="ss-card xlink" href="${BBD_URL}" style="--n:2">
+        <div class="tag">Also from us</div><h2>Blockbuster Daily</h2><p>Daily movie games, plus Jackpot: live multiplayer with friends.</p><span class="pill">Visit →</span>
+        <span class="xl-reel" aria-hidden="true">🎬</span>
+      </a>
+    </section>
     <p class="note">Your progress and streaks are saved in this browser.</p>`;
   tickHero();
-  if(canHover())app.querySelectorAll(".card").forEach(card=>{
+  const hero=document.getElementById("ssHero");
+  const mph=document.getElementById("hudMph"),gear=document.getElementById("hudGear");
+  const ok=window.SpecHero&&SpecHero.mount(hero,{onHud:(v,st)=>{
+    const m=Math.round(v*9);mph.textContent=String(Math.min(199,m)).padStart(3,"0");
+    gear.textContent=st==="drift"?(m>70?"3":m>35?"2":m>3?"1":"N"):"N";
+    hero.classList.toggle("drifting",st==="drift"&&m>3);
+  }});
+  if(!ok)hero.classList.add("no3d");
+  if(!heroIntroDone){heroIntroDone=true;hero.classList.add("intro");}
+  document.getElementById("ssReplay").onclick=()=>{if(window.SpecHero)SpecHero.replay();hero.classList.remove("intro");void hero.offsetWidth;hero.classList.add("intro");};
+  if(canHover())app.querySelectorAll(".card,.ss-card").forEach(card=>{
     card.addEventListener("pointermove",e=>{const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
-      card.style.setProperty("--rx",((.5-y)*9).toFixed(2)+"deg");card.style.setProperty("--ry",((x-.5)*11).toFixed(2)+"deg");
+      card.style.setProperty("--rx",((.5-y)*8).toFixed(2)+"deg");card.style.setProperty("--ry",((x-.5)*10).toFixed(2)+"deg");
       card.style.setProperty("--gx",(x*100).toFixed(1)+"%");card.style.setProperty("--gy",(y*100).toFixed(1)+"%");});
     card.addEventListener("pointerleave",()=>{card.style.setProperty("--rx","0deg");card.style.setProperty("--ry","0deg");});
   });
@@ -894,10 +828,7 @@ function tickHero(){
   el.textContent=[d/36e5,d/6e4%60,d/1e3%60].map(x=>String(Math.floor(x)).padStart(2,"0")).join(":");
 }
 setInterval(tickHero,1000);
-window.addEventListener("pointermove",e=>{
-  if(!canHover())return;const h=document.querySelector(".hero");if(!h)return;
-  h.style.setProperty("--mx",((e.clientX/innerWidth-.5)*2).toFixed(3));h.style.setProperty("--my",((e.clientY/innerHeight-.5)*2).toFixed(3));
-});
+
 
 
 /* ============ GAME SWITCHER ============ */
@@ -965,7 +896,7 @@ function route(){
 window.addEventListener("hashchange",route);
 // Keep every open tab in sync: redraw when another tab saves progress, or when this tab comes back into view.
 function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;if(/^#(party|jackpot)/.test(location.hash))return;app.classList.add("still");const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);renderRail();if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
-window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("hunch:"))refresh();});
+window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("ss:"))refresh();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
 
 function renderGame(g){
@@ -1021,81 +952,13 @@ function guessGame(board,def,p,ctx,idx){
     const j=def.judge(r.value,p);
     if(j.s==="hit"){st.done=true;st.won=true;}else if(st.guesses.length>=MAX){st.done=true;st.won=false;}
     fresh=st.guesses.length-1;save();render();
-    if(st.won)confetti([ctx.g.color,"#5fa463","#F2C14E","#ffffff","#141414"]);
+    if(st.won)confetti(ctx.g.id==="specs"?["#ffffff","#111111","#ff3b30","#ffffff","#111111"]:[ctx.g.color,"#5fa463","#F2C14E","#ffffff","#141414"]);
     if(st.done)setTimeout(showResult,st.won?1300:650);
   }
   function showResult(){
     const grid=st.guesses.map(v=>EMO[def.judge(v,p).s]).join("");
     const share=`Hunch ${ctx.g.name} ${ctx.label}  ${st.won?st.guesses.length:"X"}/${MAX}\n${grid}`;
     openModal(ctx.g,st.won?["Nice hunch!","Solved in "+st.guesses.length+(st.guesses.length===1?" guess":" guesses")]:["So close","The answer was "+def.answer(p)],share,ctx.practice);
-  }
-  render();
-}
-
-/* ============ BOX OFFICE ============ */
-function boxOffice(board,ctx,idx){
-  const P=BLOCKBUSTERS[idx],R=5,blank={guesses:[],done:false,found:false,score:0};
-  let st=ctx.practice?{...blank}:store.get(ctx.key,{...blank});
-  if(!Array.isArray(st.guesses))st={...blank};
-  const save=()=>{if(!ctx.practice)store.set(ctx.key,st);};
-  const bb=MOVIES.find(m=>m.name===P.movie);
-  function judge(name,r){
-    const m=MOVIES.find(x=>x.name===name),base=100*(r+1);
-    if(name===P.movie)return{s:"bb",pts:base+BB_BONUS[r],note:"Blockbuster! Jackpot bonus"};
-    if(r>=4)return{s:"miss",pts:0,note:"Not the Blockbuster"};
-    const fail=P.rules.slice(0,r+1).find(rule=>!rule.test(m));
-    return fail?{s:"miss",pts:0,note:"Doesn't fit: "+fail.label}:{s:"hit",pts:base,note:"Fits all the criteria"};
-  }
-  let fresh=-1;
-  function render(err=""){
-    const r=st.done?R:st.guesses.length;
-    const crit=P.rules.map((rule,i)=>i<=r?`<li class="${i===r&&!st.done?"new":""}">${esc(rule.label)}</li>`:`<li class="locked">Unlocks in round ${i+1}</li>`).join("")
-      +(r>=4?`<li class="final${!st.done?" new":""}"><b>Final clue:</b> ${esc(P.final)}</li>`:`<li class="locked">Final clue unlocks in round 5</li>`);
-    const rows=[];
-    for(let i=0;i<R;i++){
-      const name=st.guesses[i];
-      if(name===undefined){rows.push(`<div class="row empty"><span class="i">R${i+1}</span><span></span><span></span></div>`);continue;}
-      const j=judge(name,i);
-      rows.push(`<div class="row ${j.s}"><span class="i">R${i+1}</span><span>${j.s==="bb"?"🎬 ":""}${esc(name)}<small>${esc(j.note)}</small></span><span class="n">${j.pts?"+"+j.pts.toLocaleString():"0"}</span></div>`);
-    }
-    const prompt=r<4?`Name any movie that fits <b>every</b> criterion so far. Worth <b>${100*(r+1)}</b> points, or <b>${(100*(r+1)+BB_BONUS[r]).toLocaleString()}</b> if it's the Blockbuster.`
-      :`Last round. Only the Blockbuster scores, worth <b>${(500+BB_BONUS[4]).toLocaleString()}</b> points.`;
-    board.innerHTML=`
-      <div class="bo-top"><span>${st.done?"Final":"Round "+(r+1)+" of "+R}</span><span>Score <b>${st.score.toLocaleString()}</b></span></div>
-      <ol class="cluelist">${crit}</ol>
-      ${st.done?"":`<p class="bo-prompt">${prompt}</p>`}
-      <div class="rows">${rows.join("")}</div>
-      ${st.done?`
-        <div class="answer"><div class="answer-k">${st.found?"You found the Blockbuster":"The Blockbuster was"}</div><div class="answer-v">${esc(bb.name)}</div>
-        <p>${bb.year} · directed by ${esc(bb.dir)} · about ${fmtGross(bb.g)} worldwide</p></div>
-        <div class="actions"><button class="btn" data-a="res">See results</button><button class="btn ghost" data-a="prac">Practice another</button></div>`:`
-        <form class="guess" autocomplete="off"><input id="gin" list="opts" placeholder="Start typing a movie…" aria-label="Your guess"><button class="btn" type="submit">Guess</button></form>
-        <datalist id="opts">${MOVIES.map(m=>`<option value="${esc(m.name)}">`).join("")}</datalist><div class="err">${esc(err)}</div>`}`;
-    fx(board,fresh,err);fresh=-1;
-    const f=board.querySelector("form");
-    if(f){f.addEventListener("submit",onGuess);if(st.guesses.length)board.querySelector("#gin").focus();}
-    board.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
-      if(b.dataset.a==="res")showResult();
-      else{let n;do{n=Math.floor(Math.random()*BLOCKBUSTERS.length);}while(n===idx);practice={id:"boxoffice",idx:n};renderGame(ctx.g);window.scrollTo(0,0);}
-    });
-  }
-  function onGuess(e){
-    e.preventDefault();
-    const raw=board.querySelector("#gin").value.trim();if(!raw)return;
-    const m=MOVIE_KEYS[norm(raw)];
-    if(!m){render("That movie isn't on the list. Pick one of the suggestions.");board.querySelector("#gin").value=raw;return;}
-    if(st.guesses.includes(m.name)){render("You already used that movie. Each round needs a new one.");return;}
-    const r=st.guesses.length,j=judge(m.name,r);
-    st.guesses.push(m.name);st.score+=j.pts;
-    if(j.s==="bb"){st.done=true;st.found=true;}else if(st.guesses.length>=R)st.done=true;
-    fresh=st.guesses.length-1;save();render();
-    if(j.s==="bb")confetti(["#F2C14E","#ffd970","#c9971c","#ffffff","#141414"],220);else if(j.s==="hit")confetti([ctx.g.color,"#5fa463","#ffffff"],40);
-    if(st.done)setTimeout(showResult,st.found?1400:650);
-  }
-  function showResult(){
-    const grid=st.guesses.map((n,i)=>({hit:"🟩",miss:"⬜",bb:"🎬"})[judge(n,i).s]).join("");
-    openModal(ctx.g,st.found?["Blockbuster!",`Found in round ${st.guesses.length} · ${st.score.toLocaleString()} points`]:["No Blockbuster today",`It was ${bb.name} · you scored ${st.score.toLocaleString()} points`],
-      `Hunch Blockbuster ${ctx.label}  ${st.score.toLocaleString()} pts\n${grid}`,ctx.practice);
   }
   render();
 }
@@ -1131,7 +994,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
 // Stats are worked out from every finished daily puzzle saved in this browser.
 function allKeys(){
   const ks=new Set(Object.keys(mem));
-  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("hunch:"))ks.add(k.slice(6));}}catch(e){}
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("ss:"))ks.add(k.slice(3));}}catch(e){}
   return[...ks];
 }
 const isWin=(id,st)=>id==="boxoffice"?!!st.found:!!st.won;
@@ -1194,7 +1057,7 @@ function renderStats(){
     ${played?duo:""}
     <h2 class="sec-h">By game</h2>
     <div class="gstats">${gs}</div>
-    <p class="note">A day streak counts days you finish at least one game. A perfect day means you solved all five.</p></div>`;
+    <p class="note">A day streak counts days you finish at least one game. A perfect day means you solved every game that day.</p></div>`;
   app.querySelectorAll(".tile,.rank,.gs").forEach((el,i)=>el.style.setProperty("--n",i));
   app.querySelectorAll(".dist").forEach(d=>d.querySelectorAll(".bar i").forEach((el,i)=>el.style.setProperty("--n",i)));
   countUp(app);
@@ -1215,7 +1078,6 @@ themeBtn.onclick=()=>{const t=document.documentElement.dataset.theme==="dark"?"l
 
 route();
 </script>
-<script src="party-data.js"></script>
-<script src="party.js"></script>
+
 </body>
 </html>

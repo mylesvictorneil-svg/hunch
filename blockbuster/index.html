@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blockbuster Daily — Daily Movie Games</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#141312">
+<script>
+  // Apply the saved theme (or the device setting) before anything draws, so there's no flash.
+  (function(){var t=null;try{t=localStorage.getItem("bbd:theme");}catch(e){}
+    if(t)t=JSON.parse(t);if(t!=="dark"&&t!=="light")t="dark";
+    document.documentElement.dataset.theme=t;})();
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141414; --on-ink:#fff; --muted:#6c6a66; --text2:#3c3a36; --line:#e4e1da; --bg:#faf8f3; --card:#fff;
+    --soft:#f1eee6; --field:#fff; --field-line:#cfcbc2; --placeholder:#9a978f; --empty:#c2bfb7; --locked:#e8e5dd;
+    --overlay:rgba(20,20,20,.45); --shadow:rgba(0,0,0,.08);
+    --green:#5fa463; --yellow:#d1b448; --gray:#a3a19c; --red:#d9604c; --gold:#F2C14E;
+    --serif:"Fraunces", Georgia, serif; --sans:"DM Sans", system-ui, -apple-system, sans-serif;
+    color-scheme:light;
+  }
+  [data-theme="dark"]{
+    --ink:#f1eee7; --on-ink:#141414; --muted:#a29e95; --text2:#d3cfc6; --line:#33312d; --bg:#141312; --card:#1e1d1b;
+    --soft:#262422; --field:#1a1917; --field-line:#4a4741; --placeholder:#77736b; --empty:#4f4c46; --locked:#3a3834;
+    --overlay:rgba(0,0,0,.62); --shadow:rgba(0,0,0,.4);
+    --gray:#6b6965;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  body{transition:background .2s,color .2s}
+  a{color:inherit}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 22px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+  .logo{font-family:var(--serif);font-weight:800;font-size:24px;text-decoration:none;letter-spacing:-.5px}
+  .logo span{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-left:2px;vertical-align:2px}
+  .top-r{display:flex;align-items:center;gap:8px}
+  .date{font-size:13px;color:var(--muted);font-weight:500;margin-right:6px}
+  .tbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line);background:transparent;font-weight:700;font-size:13px;text-decoration:none;transition:border-color .15s}
+  .tbtn:hover,.tbtn.on{border-color:var(--ink)}
+  .tbtn svg{width:17px;height:17px}
+  .tbtn.icon{width:36px;padding:0;justify-content:center}
+  main{max-width:1040px;margin:0 auto;padding:0 20px 60px}
+
+  /* hub */
+  .hero{text-align:center;padding:52px 0 34px}
+  .hero h1{font-family:var(--serif);font-weight:800;font-size:clamp(44px,8vw,72px);margin:0;letter-spacing:-2px;line-height:1}
+  .hero p{color:var(--muted);font-size:17px;margin:14px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;transition:transform .15s, box-shadow .15s}
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 26px var(--shadow)}
+  .card .band{background:var(--c);height:118px;display:flex;align-items:center;justify-content:center}
+  .card .band svg{width:58px;height:58px}
+  .card .body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
+  .card h2{font-family:var(--serif);font-weight:800;font-size:26px;margin:0;letter-spacing:-.5px}
+  .card .tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:3px}
+  .card p{margin:10px 0 18px;color:var(--text2);line-height:1.45;font-size:15px;flex:1}
+  .card .foot{display:flex;align-items:center;justify-content:space-between}
+  .pill{display:inline-block;padding:9px 20px;border-radius:999px;background:var(--ink);color:var(--on-ink);font-weight:700;font-size:14px}
+  .pill.done{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+  .num{font-size:13px;color:var(--muted)}
+  .note{text-align:center;color:var(--muted);font-size:13px;margin-top:34px}
+
+  /* game */
+  .game{max-width:560px;margin:0 auto;padding-top:22px}
+  .back{font-size:14px;font-weight:500;text-decoration:none;color:var(--muted)}
+  .back:hover{color:var(--ink)}
+  .ghead{display:flex;align-items:center;gap:14px;margin:18px 0 8px}
+  .gicon{width:54px;height:54px;border-radius:12px;background:var(--c);display:flex;align-items:center;justify-content:center;flex:none}
+  .gicon svg{width:32px;height:32px}
+  .ghead h1{font-family:var(--serif);font-weight:800;font-size:32px;margin:0;letter-spacing:-.6px;line-height:1.05}
+  .gsub{font-size:13px;color:var(--muted);font-weight:500;margin-top:2px}
+  .how{font-size:14px;color:var(--text2);line-height:1.5;margin:8px 0 20px;padding:10px 14px;background:var(--soft);border-radius:10px}
+
+  .cluelist{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px;counter-reset:c}
+  .cluelist li{counter-increment:c;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 46px;position:relative;line-height:1.4;font-size:15px}
+  .cluelist li::before{content:counter(c);position:absolute;left:14px;top:11px;width:22px;height:22px;border-radius:50%;background:var(--c);color:#141414;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .cluelist li.locked{color:var(--muted);background:transparent;border-style:dashed;font-size:13px}
+  .cluelist li.locked::before{background:var(--locked);color:var(--muted)}
+
+  .lot{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;gap:16px;margin-bottom:18px}
+  .lot-emoji{font-size:44px;line-height:1;width:72px;height:72px;flex:none;border-radius:12px;background:color-mix(in srgb,var(--c) 35%,var(--card));display:flex;align-items:center;justify-content:center}
+  .lot-title{font-family:var(--serif);font-weight:800;font-size:20px;line-height:1.15}
+  .lot-meta{font-size:13px;color:var(--muted);margin-top:4px;font-weight:500}
+  .lot p{margin:8px 0 0;font-size:14.5px;line-height:1.45;color:var(--text2)}
+
+  .specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+  .spec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-height:68px}
+  .spec .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+  .spec .v{font-size:15px;margin-top:4px;line-height:1.3;font-weight:500}
+  .spec.locked{background:transparent;border-style:dashed}
+  .spec.locked .v{color:var(--muted);font-size:13px;font-weight:400}
+
+  .rows{display:grid;gap:6px;margin-bottom:16px}
+  .row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;min-height:46px;border-radius:9px;padding:0 14px;font-weight:700;font-size:15px}
+  .row .i{font-size:12px;opacity:.7}
+  .row .n{font-size:13px;font-weight:500}
+  .row.empty{border:1.5px solid var(--line);background:transparent;color:var(--empty)}
+  .row.hit{background:var(--green);color:#fff}
+  .row.close{background:var(--yellow);color:#fff}
+  .row.miss{background:var(--gray);color:#fff}
+  .row.far{background:var(--red);color:#fff}
+  .row small{display:block;font-size:12px;font-weight:500;opacity:.92;margin-top:1px}
+  .row:has(small){padding-top:7px;padding-bottom:7px}
+  .row.hit .n,.row.bb .n{font-weight:700;font-size:14px}
+  .row.bb{background:var(--gold);color:#141414}
+
+  form.guess{display:flex;gap:8px}
+  form.guess input{flex:1;min-width:0;font:inherit;font-size:17px;color:var(--ink);-webkit-text-fill-color:var(--ink);caret-color:var(--ink);opacity:1;padding:13px 15px;border:1.5px solid var(--field-line);border-radius:10px;background:var(--field);outline:none}
+  form.guess input:focus{border-color:var(--ink)}
+  form.guess input::placeholder{color:var(--placeholder);-webkit-text-fill-color:var(--placeholder)}
+  .btn{border:0;background:var(--ink);color:var(--on-ink);font-weight:700;font-size:15px;padding:0 22px;border-radius:10px;min-height:48px}
+  .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+  .err{color:var(--red);font-size:13px;min-height:18px;margin-top:6px;font-weight:500}
+
+  .answer{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center;margin-bottom:12px}
+  .answer-k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted)}
+  .answer-v{font-family:var(--serif);font-weight:800;font-size:28px;margin-top:4px;letter-spacing:-.4px}
+  .answer p{margin:8px 0 0;font-size:14px;color:var(--text2);line-height:1.45}
+  .actions{display:flex;gap:8px}
+  .actions .btn{flex:1}
+
+  /* blockbuster */
+  .bo-top{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;margin-bottom:10px;font-size:15px}
+  .bo-top b{font-family:var(--serif);font-size:22px;margin-left:4px}
+  .cluelist li.new{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .cluelist li.final{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .cluelist li.final::before{background:var(--gold);color:#141414}
+  .bo-prompt{font-size:14px;line-height:1.5;margin:0 0 14px;color:var(--text2)}
+
+
+  /* game switcher rail */
+  #rail{position:fixed;left:18px;top:50%;transform:translateY(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px;border-radius:20px;
+    background:color-mix(in srgb,var(--card) 86%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);box-shadow:0 10px 30px var(--shadow)}
+  #rail[hidden]{display:none}
+  #rail.in{animation:railIn .55s cubic-bezier(.2,1.2,.4,1) both}
+  @keyframes railIn{from{opacity:0;transform:translateY(-50%) translateX(-30px)}}
+  #rail .sep{width:24px;height:1px;background:var(--line);margin:2px 0}
+  .ri{position:relative;width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;text-decoration:none;transition:transform .2s cubic-bezier(.2,1.4,.4,1),box-shadow .2s}
+  .ri.g{background:var(--c)}
+  .ri.g svg{width:27px;height:27px}
+  .ri.u{color:var(--muted);border:1.5px solid transparent}
+  .ri.u svg{width:22px;height:22px}
+  .ri.u:hover,.ri.u.on{color:var(--ink);border-color:var(--line)}
+  .ri.g:not(.on){opacity:.78;filter:saturate(.85)}
+  .ri:hover{transform:scale(1.1)}
+  .ri.g.on{opacity:1;filter:none;box-shadow:0 0 0 2.5px var(--bg),0 0 0 5px var(--ink);transform:scale(1.06)}
+  .ri .st{position:absolute;right:-4px;top:-4px;width:17px;height:17px;border-radius:50%;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid var(--card);color:#fff}
+  .ri .st.done{background:var(--green)}
+  .ri .st.miss{background:var(--gray)}
+  .ri .st.prog{background:var(--gold);width:13px;height:13px;right:-2px;top:-2px}
+  .ri::after{content:attr(data-tip);position:absolute;left:calc(100% + 14px);top:50%;transform:translateY(-50%) translateX(-6px);white-space:nowrap;background:var(--ink);color:var(--on-ink);
+    font-size:12.5px;font-weight:700;padding:6px 10px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s}
+  @media (hover:hover){.ri:hover::after{opacity:1;transform:translateY(-50%)}}
+  @media (max-width:900px){
+    #rail{left:50%;top:auto;bottom:12px;transform:translateX(-50%);flex-direction:row;padding:8px;gap:6px;border-radius:18px;max-width:calc(100vw - 20px)}
+    #rail.in{animation:railUp .5s cubic-bezier(.2,1.2,.4,1) both}
+    @keyframes railUp{from{opacity:0;transform:translateX(-50%) translateY(30px)}}
+    #rail .sep{width:1px;height:24px;margin:0 2px}
+    .ri{width:42px;height:42px;border-radius:12px}
+    .ri.g svg{width:24px;height:24px}
+    .ri::after{display:none}
+    body.has-rail main{padding-bottom:110px}
+  }
+
+  /* party */
+  .pbanner{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:22px;margin:0 0 18px;padding:22px 26px;border-radius:16px;text-decoration:none;color:#fff;overflow:hidden;
+    background:linear-gradient(120deg,#2b1d3f,#53246a 45%,#a8326b);box-shadow:0 12px 30px var(--shadow);animation:cardIn .7s .2s cubic-bezier(.2,1,.3,1) both;transition:transform .25s}
+  .pbanner:hover{transform:translateY(-4px)}
+  .pbanner::before{content:"";position:absolute;inset:-60%;background:conic-gradient(from 0deg,transparent,rgba(255,255,255,.12),transparent 30%);animation:sweep 7s linear infinite}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+  .pbanner>*{position:relative}
+  .pbanner h2{font-family:var(--serif);font-weight:800;font-size:28px;margin:2px 0 4px;letter-spacing:-.5px}
+  .pbanner p{margin:0;font-size:15px;line-height:1.45;opacity:.9;max-width:520px}
+  .pbanner .new{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.1em;background:#F2C14E;color:#141414;padding:3px 8px;border-radius:6px}
+  .pbanner .pill{background:#fff;color:#141414}
+  .pb-av{display:flex}
+  .pb-av span{width:46px;height:46px;border-radius:50%;margin-left:-12px;border:3px solid #3a2050;display:flex;align-items:center;justify-content:center;font-weight:800;color:#141414;background:var(--c);animation:bob 3s ease-in-out infinite;animation-delay:calc(var(--i)*-.6s)}
+  .pb-av span:first-child{margin-left:0}
+  .party{max-width:600px;margin:0 auto;padding-top:22px}
+  .pbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:12px}
+  .plabel{display:block;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+  .psub{font-size:13.5px;color:var(--muted);margin:0 0 12px;line-height:1.45}
+  .psub b{color:var(--ink)}
+  .pfield{width:100%;font:inherit;font-size:17px;padding:12px 14px;border:1.5px solid var(--field-line);border-radius:10px;background:var(--field);color:var(--ink);-webkit-text-fill-color:var(--ink);outline:none}
+  .pfield:focus{border-color:var(--ink)}
+  .pfield.code{text-transform:uppercase;letter-spacing:.3em;font-weight:800;text-align:center}
+  .pchoice{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .pchoice .pbox{margin:0}
+  .pjoin{display:flex;gap:8px}
+  .pjoin .pfield{min-width:0}
+  .pwait{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);font-weight:500;padding:22px;margin-bottom:12px}
+  .spin{width:16px;height:16px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--ink);animation:rot .8s linear infinite}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  .pcode-box{text-align:center;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:12px}
+  .pcode{display:flex;justify-content:center;gap:8px;margin:4px 0 14px}
+  .pcode span{width:58px;height:68px;border-radius:12px;background:var(--ink);color:var(--on-ink);font-family:var(--serif);font-weight:800;font-size:38px;display:flex;align-items:center;justify-content:center;animation:flipIn .6s cubic-bezier(.3,1.3,.5,1) both;animation-delay:calc(var(--i)*90ms)}
+  .plink{display:flex;gap:8px}
+  .plink .pfield{font-size:13px;color:var(--muted);-webkit-text-fill-color:var(--muted)}
+  .plink .btn{white-space:nowrap}
+  .plist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .pp{display:flex;align-items:center;gap:10px;font-weight:700;animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both}
+  .pp em,.pr em{font-style:normal;font-size:11px;font-weight:700;color:var(--muted);margin-left:2px}
+  .pp.off,.ps.off{opacity:.4}
+  .pav{width:30px;height:30px;flex:none;border-radius:50%;background:var(--c);color:#141414;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center}
+  .pav.big{width:38px;height:38px;font-size:17px}
+  .pseg{display:inline-flex;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .pseg button{border:0;background:transparent;padding:9px 18px;font-weight:700;font-size:14px}
+  .pseg button.on{background:var(--ink);color:var(--on-ink)}
+  .ptop{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+  .pscores{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;margin-bottom:6px}
+  .ps{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:999px;background:var(--card);border:1.5px solid var(--line);white-space:nowrap;font-size:14px;transition:border-color .2s,transform .2s}
+  .ps .nm{font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis}
+  .ps.turn{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 6px 16px var(--shadow)}
+  .pjack{font-size:13px;color:var(--muted);font-weight:700}
+  .pturn{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:4px}
+  .pturn.me{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,#F08BB6 45%,transparent);animation:popIn .5s cubic-bezier(.2,1.4,.4,1) both}
+  .pt-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:17px}
+  .pt-h b{flex:1}
+  .ptimer{position:relative;width:120px;height:26px;border-radius:999px;background:var(--soft);overflow:hidden;flex:none}
+  .ptimer i{position:absolute;left:0;top:0;bottom:0;background:var(--green);border-radius:999px;transition:width .25s linear}
+  .ptimer span{position:relative;display:block;text-align:center;font-size:12.5px;font-weight:800;line-height:26px;font-variant-numeric:tabular-nums}
+  .ptimer.low i{background:var(--red)}
+  .ptimer.low{animation:shake .5s ease infinite}
+  .prow{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:6px 0 4px}
+  .link{border:0;background:none;font-weight:700;font-size:14px;color:var(--muted);text-decoration:underline;padding:4px}
+  .row.skipped{color:var(--muted);font-weight:500}
+  .pwin{text-align:center;font-family:var(--serif);font-weight:800;font-size:clamp(30px,6vw,42px);margin:10px 0 16px;animation:popIn .7s cubic-bezier(.2,1.4,.4,1) both}
+  .pwin .crown{display:block;font-size:52px;animation:bob 2.4s ease-in-out infinite}
+  .ppod{display:grid;gap:8px;margin-bottom:14px}
+  .pr{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 14px;animation:fadeUp .5s cubic-bezier(.2,1,.3,1) both;animation-delay:calc(var(--n)*90ms + .2s)}
+  .pr .md{width:28px;text-align:center;font-size:20px;font-weight:800}
+  .pr .nm{flex:1;font-weight:700}
+  .pr b{font-family:var(--serif);font-size:22px}
+  .pr:first-child{border-color:var(--gold);box-shadow:0 0 0 2px color-mix(in srgb,var(--gold) 50%,transparent)}
+  @media (max-width:640px){
+    .pbanner{grid-template-columns:1fr;text-align:left;gap:12px}
+    .pbanner .pill{justify-self:start}
+    .pchoice{grid-template-columns:1fr}
+    .pcode span{width:50px;height:60px;font-size:32px}
+    .ptimer{width:84px}
+  }
+  /* stats page */
+  .stats-page{max-width:820px;margin:0 auto;padding-top:22px}
+  .stats-page h1{font-family:var(--serif);font-weight:800;font-size:clamp(34px,6vw,48px);letter-spacing:-1px;margin:16px 0 4px}
+  .stats-page .lede{color:var(--muted);margin:0 0 24px;font-size:15px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:22px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 12px;text-align:center}
+  .tile b{display:block;font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.1}
+  .tile span{font-size:12px;color:var(--muted);font-weight:500}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px}
+  .rank{border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line)}
+  .rank .gicon{width:46px;height:46px}
+  .rank .gicon svg{width:26px;height:26px}
+  .rank .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .rank .v{font-family:var(--serif);font-weight:800;font-size:22px;line-height:1.15}
+  .rank .d{font-size:13px;color:var(--text2);margin-top:2px}
+  .sec-h{font-family:var(--serif);font-weight:800;font-size:22px;margin:0 0 12px;letter-spacing:-.3px}
+  .gstats{display:grid;gap:12px}
+  .gs{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;align-items:start}
+  .gs-h{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .gs-h .gicon{width:40px;height:40px;border-radius:10px}
+  .gs-h .gicon svg{width:23px;height:23px}
+  .gs-h h3{font-family:var(--serif);font-weight:800;font-size:21px;margin:0;line-height:1.1}
+  .gs-h a{font-size:12px;color:var(--muted);font-weight:500}
+  .mini{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:4px}
+  .mini b{display:block;font-family:var(--serif);font-weight:800;font-size:22px}
+  .mini span{font-size:11px;color:var(--muted);font-weight:500}
+  .avg{margin-top:12px;font-size:13.5px;color:var(--text2);line-height:1.45}
+  .avg b{color:var(--ink)}
+  .dist-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+  .dist{display:grid;gap:5px}
+  .bar{display:grid;grid-template-columns:22px 1fr;align-items:center;gap:8px;font-size:12px;font-weight:700}
+  .bar i{display:flex;align-items:center;justify-content:flex-end;height:22px;border-radius:5px;background:var(--gray);min-width:24px;color:#fff;font-style:normal;padding:0 7px;font-size:12px;line-height:1}
+  .bar i.top{background:var(--green)}
+  .bar i.lose{background:var(--red)}
+  .bar i.z{background:var(--locked);color:var(--muted)}
+  .empty-note{color:var(--muted);font-size:13.5px;padding:8px 0}
+
+  /* modal */
+  .modal{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20}
+  .modal[hidden]{display:none}
+  .sheet{background:var(--card);border-radius:16px;max-width:420px;width:100%;padding:26px 24px 22px;position:relative;max-height:92vh;overflow:auto;animation:pop .2s ease-out}
+  @keyframes pop{from{transform:translateY(12px);opacity:0}}
+  .x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:26px;line-height:1;color:var(--muted)}
+  .sheet h3{font-family:var(--serif);font-weight:800;font-size:30px;margin:0;text-align:center;letter-spacing:-.5px}
+  .sheet .sub{text-align:center;color:var(--muted);margin:6px 0 18px;font-size:15px}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;margin-bottom:18px}
+  .stats b{display:block;font-size:26px;font-family:var(--serif);font-weight:800}
+  .stats span{font-size:11px;color:var(--muted);font-weight:500}
+  .share{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:15px;white-space:pre-wrap;margin:0 0 10px;font-family:var(--sans);line-height:1.5}
+  .next{text-align:center;color:var(--muted);font-size:13px;margin-top:14px}
+  .next b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .next a{color:var(--ink);font-weight:700}
+  .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:9px 16px;border-radius:8px;font-size:14px;font-weight:500;z-index:30}
+
+  /* ===== motion & 3D ===== */
+  .bg-blobs{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
+  .bg-blobs i{position:absolute;width:46vmax;height:46vmax;border-radius:50%;filter:blur(70px);opacity:.28;animation:drift 26s ease-in-out infinite alternate}
+  [data-theme="dark"] .bg-blobs i{opacity:.13}
+  .bg-blobs i:nth-child(1){background:#F2C14E;left:-12vmax;top:-14vmax}
+  .bg-blobs i:nth-child(2){background:#AE96DE;right:-16vmax;top:10vh;animation-duration:32s;animation-delay:-8s}
+  .bg-blobs i:nth-child(3){background:#6AA8EC;left:20vw;bottom:-22vmax;animation-duration:38s;animation-delay:-15s}
+  .bg-blobs i:nth-child(4){background:#F27A62;right:10vw;bottom:-10vmax;width:30vmax;height:30vmax;animation-duration:29s;animation-delay:-4s}
+  @keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(6vmax,4vmax) scale(1.12)}100%{transform:translate(-4vmax,7vmax) scale(.94)}}
+  body{background:transparent}
+  html{background:var(--bg)}
+  .top{background:color-mix(in srgb,var(--card) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+  .logo span{animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.45);box-shadow:0 0 0 4px color-mix(in srgb,var(--red) 25%,transparent)}}
+
+  /* hero */
+  .hero{position:relative;padding:86px 0 70px;--mx:0;--my:0}
+  .hero h1,.hero p,.hero .chip{position:relative;z-index:2}
+  .hero h1 .ch{display:inline-block;animation:rise .8s cubic-bezier(.2,1.3,.4,1) both;animation-delay:calc(var(--i)*70ms)}
+  .hero h1:hover .ch{animation:hop .5s ease both;animation-delay:calc(var(--i)*45ms)}
+  @keyframes rise{from{transform:translateY(60%) rotate(8deg);opacity:0}}
+  @keyframes hop{50%{transform:translateY(-14%)}}
+  .hero p{animation:fadeUp .7s .45s ease both}
+  .chip{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:7px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:500;color:var(--muted);animation:fadeUp .7s .6s ease both}
+  .chip b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .chip .live{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 var(--green);animation:ping 1.8s infinite}
+  @keyframes ping{70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @keyframes fadeUp{from{transform:translateY(14px);opacity:0}}
+  .stage{position:absolute;inset:0;pointer-events:none;z-index:1}
+  .float{position:absolute;left:var(--x);top:var(--y);transform:translate3d(calc(var(--mx)*var(--z)*1px),calc(var(--my)*var(--z)*1px),0);transition:transform .5s cubic-bezier(.2,.8,.2,1);animation:fadeIn 1s calc(var(--k)*120ms + .2s) both}
+  @keyframes fadeIn{from{opacity:0}}
+  .bob{perspective:700px;animation:bob var(--b,6s) ease-in-out infinite;animation-delay:calc(var(--k)*-1.3s)}
+  @keyframes bob{50%{transform:translateY(-16px)}}
+  .cube{--h:calc(var(--s)/2);width:var(--s);height:var(--s);position:relative;transform-style:preserve-3d;animation:spin var(--d,14s) linear infinite;animation-delay:calc(var(--k)*-2.1s)}
+  .cube .f{position:absolute;inset:0;border-radius:9px;background:var(--c);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08)}
+  .cube .f svg{width:58%;height:58%}
+  .cube .f:nth-child(1){transform:translateZ(var(--h))}
+  .cube .f:nth-child(2){transform:rotateY(180deg) translateZ(var(--h));filter:brightness(.82)}
+  .cube .f:nth-child(3){transform:rotateY(90deg) translateZ(var(--h));filter:brightness(.9)}
+  .cube .f:nth-child(4){transform:rotateY(-90deg) translateZ(var(--h));filter:brightness(.9)}
+  .cube .f:nth-child(5){transform:rotateX(90deg) translateZ(var(--h));filter:brightness(1.08)}
+  .cube .f:nth-child(6){transform:rotateX(-90deg) translateZ(var(--h));filter:brightness(.75)}
+  @keyframes spin{from{transform:rotateX(var(--rx0,-20deg)) rotateY(0)}to{transform:rotateX(calc(var(--rx0,-20deg) + 360deg)) rotateY(360deg)}}
+  .shadow{position:absolute;left:50%;top:calc(100% + 26px);width:calc(var(--s)*.9);height:12px;margin-left:calc(var(--s)*-.45);border-radius:50%;background:rgba(0,0,0,.14);filter:blur(5px);animation:shad var(--b,6s) ease-in-out infinite;animation-delay:calc(var(--k)*-1.3s)}
+  [data-theme="dark"] .shadow{background:rgba(0,0,0,.5)}
+  @keyframes shad{50%{transform:scale(.72);opacity:.6}}
+
+  /* cards */
+  .card{position:relative;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--lift,0px));transition:transform .25s ease-out, box-shadow .25s;animation:cardIn .7s cubic-bezier(.2,1,.3,1) both;animation-delay:calc(var(--n)*90ms + .25s)}
+  .card:hover{--lift:-6px;transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--lift))}
+  @keyframes cardIn{from{transform:perspective(900px) translateY(40px) rotateX(14deg);opacity:0}}
+  .card::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--gx,50%) var(--gy,0%),rgba(255,255,255,.38),transparent 55%);opacity:0;transition:opacity .25s;pointer-events:none;mix-blend-mode:soft-light}
+  .card:hover::after{opacity:1}
+  .card .band{position:relative;overflow:hidden}
+  .card .band::before{content:"";position:absolute;inset:-50%;background:repeating-linear-gradient(45deg,rgba(255,255,255,.14) 0 14px,transparent 14px 28px);animation:stripes 9s linear infinite}
+  .card:hover .band::before{animation-duration:2.5s}
+  @keyframes stripes{to{transform:translate(39.6px,0)}}
+  .card .band svg{position:relative;transition:transform .35s cubic-bezier(.2,1.4,.4,1)}
+  .card:hover .band svg{transform:scale(1.18)}
+  .pill{position:relative;overflow:hidden}
+  .pill:not(.done)::after{content:"";position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:skewX(-20deg);animation:shine 3.6s ease-in-out infinite;animation-delay:calc(var(--n)*.4s + 1s)}
+  [data-theme="dark"] .pill:not(.done)::after{background:linear-gradient(90deg,transparent,rgba(0,0,0,.18),transparent)}
+  @keyframes shine{0%,60%{left:-60%}100%{left:130%}}
+
+  /* living icons */
+  .ic-era{animation:flip 4.5s ease-in-out infinite}
+  @keyframes flip{0%,72%{transform:rotate(0)}86%,100%{transform:rotate(180deg)}}
+  .ic-era .sand{animation:sand 4.5s ease-in-out infinite;transform-box:fill-box;transform-origin:center bottom}
+  @keyframes sand{0%{transform:scaleY(.2)}70%{transform:scaleY(1)}100%{transform:scaleY(1)}}
+  .ic-sold{transform-origin:72% 28%;animation:swing 3.2s ease-in-out infinite}
+  @keyframes swing{0%,100%{transform:rotate(-9deg)}50%{transform:rotate(9deg)}}
+  .ic-specs .needle{transform-box:view-box;transform-origin:24px 34px;animation:rev 2.8s cubic-bezier(.5,0,.3,1) infinite}
+  @keyframes rev{0%{transform:rotate(-95deg)}45%{transform:rotate(8deg)}55%{transform:rotate(2deg)}62%{transform:rotate(10deg)}100%{transform:rotate(-95deg)}}
+  .ic-blurred{animation:focus 3.4s ease-in-out infinite}
+  @keyframes focus{0%,100%{filter:blur(2.2px);opacity:.7}40%,70%{filter:blur(0);opacity:1}}
+  .ic-boxoffice{animation:wob 3s ease-in-out infinite}
+  .ic-boxoffice .star{transform-box:fill-box;transform-origin:center;animation:twirl 3s ease-in-out infinite}
+  @keyframes wob{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg) translateY(-2px)}}
+  @keyframes twirl{0%,40%{transform:rotate(0) scale(1)}60%{transform:rotate(144deg) scale(1.3)}80%,100%{transform:rotate(144deg) scale(1)}}
+
+  /* views & gameplay */
+  #app>*{animation:viewIn .45s cubic-bezier(.2,.9,.3,1) both}
+  @keyframes viewIn{from{opacity:0;transform:translateY(12px)}}
+  #app.still *, #app.still>*{animation:none!important}
+  .gicon{animation:iconIn .7s cubic-bezier(.2,1.5,.4,1) both}
+  @keyframes iconIn{from{transform:scale(.4) rotate(-25deg);opacity:0}}
+  .rows{perspective:900px}
+  .row.flip{animation:flipIn .6s cubic-bezier(.3,1.3,.5,1) both;transform-origin:center top}
+  @keyframes flipIn{0%{transform:rotateX(-95deg);opacity:.3}100%{transform:none;opacity:1}}
+  .row.flip.hit,.row.flip.bb{animation:flipIn .6s cubic-bezier(.3,1.3,.5,1) both, winPop .5s .55s ease both}
+  @keyframes winPop{50%{transform:scale(1.04)}}
+  .fresh{animation:freshIn .7s .25s cubic-bezier(.2,1.4,.4,1) both}
+  @keyframes freshIn{0%{transform:scale(.92);opacity:0;box-shadow:0 0 0 0 var(--c)}60%{box-shadow:0 0 0 6px color-mix(in srgb,var(--c) 35%,transparent)}100%{box-shadow:0 0 0 0 transparent}}
+  .cluelist li.new.fresh{animation:freshIn .7s .25s cubic-bezier(.2,1.4,.4,1) both}
+  .shake{animation:shake .45s ease}
+  @keyframes shake{20%,60%{transform:translateX(-7px)}40%,80%{transform:translateX(7px)}}
+  .btn{transition:transform .12s, filter .15s}
+  .btn:hover{filter:brightness(1.12)}
+  .btn:active{transform:scale(.96)}
+  .answer{animation:popIn .6s cubic-bezier(.2,1.4,.4,1) both}
+  @keyframes popIn{from{transform:scale(.85);opacity:0}}
+  .sheet{animation:sheetIn .45s cubic-bezier(.2,1.4,.4,1)}
+  @keyframes sheetIn{from{transform:translateY(24px) scale(.92);opacity:0}}
+  .modal:not([hidden]){animation:fadeIn .25s ease both}
+  #fx{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:40}
+
+  /* stats motion */
+  .tile,.rank,.gs{animation:fadeUp .6s cubic-bezier(.2,1,.3,1) both;animation-delay:calc(var(--n,0)*70ms)}
+  .tile{transition:transform .2s}
+  .tile:hover{transform:translateY(-3px)}
+  .bar i{transform-origin:left center;animation:grow .9s cubic-bezier(.2,1,.3,1) both;animation-delay:calc(var(--n,0)*60ms + .3s)}
+  @keyframes grow{from{transform:scaleX(0)}}
+
+  @media (max-width:640px){
+    .hero{padding:64px 0 46px}
+    .float{--sm:1}
+    .float.hide-sm{display:none}
+    .float{top:calc(var(--y)*.5 + 34px)}
+    .hero{padding-top:92px}
+    .cube{width:calc(var(--s)*.62);height:calc(var(--s)*.62);--h:calc(var(--s)*.31)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition:none!important}
+  }
+
+
+  /* ===== Blockbuster Daily theme ===== */
+  @media (min-width:641px){.grid{grid-template-columns:repeat(2,1fr)}}
+  :root{--red:#e23b4a;--gold:#F6C453}
+  .bg-blobs i:nth-child(1){background:#e23b4a}
+  .bg-blobs i:nth-child(2){background:#F6C453}
+  .bg-blobs i:nth-child(3){background:#7b2cbf}
+  .bg-blobs i:nth-child(4){background:#3a86ff}
+  .logo{display:flex;align-items:center}
+  .logo em{font-style:normal;font-family:var(--sans);font-size:10.5px;font-weight:800;letter-spacing:.16em;background:var(--gold);color:#141414;padding:3px 7px;border-radius:5px;margin-left:8px}
+  .hero h1{color:var(--ink)}
+  .bulbs{display:flex;justify-content:center;gap:14px;margin:0 auto 18px;max-width:560px;position:relative;z-index:2}
+  .bulbs i{width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 10px var(--gold),0 0 22px color-mix(in srgb,var(--gold) 60%,transparent);animation:chase 1.2s steps(1) infinite}
+  .bulbs i:nth-child(3n+2){animation-delay:.4s}.bulbs i:nth-child(3n+3){animation-delay:.8s}
+  @keyframes chase{0%{opacity:1}33%{opacity:.25;box-shadow:none}100%{opacity:1}}
+  .ticket{position:relative;z-index:2;display:inline-block;margin-top:10px;padding:6px 22px;font-weight:800;letter-spacing:.42em;font-size:14px;color:#141414;background:var(--gold);
+    -webkit-mask:radial-gradient(circle 7px at 0 50%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,transparent 98%,#000) right/51% 100% no-repeat;
+    mask:radial-gradient(circle 7px at 0 50%,transparent 98%,#000) left/51% 100% no-repeat,radial-gradient(circle 7px at 100% 50%,transparent 98%,#000) right/51% 100% no-repeat;animation:popIn .7s .7s cubic-bezier(.2,1.4,.4,1) both}
+  .xsite{display:flex;align-items:center;gap:14px;margin-top:18px;padding:16px 20px;border-radius:14px;background:var(--card);border:1px solid var(--line);text-decoration:none;font-size:15px;transition:transform .2s,border-color .2s;animation:fadeUp .6s .9s both}
+  .xsite:hover{transform:translateY(-3px);border-color:var(--ink)}
+  .xsite .xs-ic{font-size:28px;animation:bob 2.6s ease-in-out infinite}
+  .xsite span:nth-child(2){flex:1}
+  .xsite u{text-decoration-color:var(--red);text-decoration-thickness:2px;font-weight:700}
+  .xsite .xs-go{font-weight:800;font-size:20px;transition:transform .2s}
+  .xsite:hover .xs-go{transform:translateX(5px)}
+  .pcheck{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:13.5px;font-weight:500;margin:4px 0}
+  @media (max-width:640px){
+    .date{display:none}
+    .gs{grid-template-columns:1fr}
+    .duo{grid-template-columns:1fr}
+  }
+  @media (max-width:480px){
+    .top{padding:10px 14px}
+    .specs{grid-template-columns:1fr 1fr}
+    .lot{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+<header class="top">
+  <a href="#" class="logo">Blockbuster<span></span><em>Daily</em></a>
+  <div class="top-r">
+    <span class="date" id="today"></span>
+    <a href="#stats" class="tbtn" id="statsBtn" aria-label="Your stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Stats</a>
+    <button class="tbtn icon" id="themeBtn" aria-label="Switch light or dark mode"></button>
+  </div>
+</header>
+<div class="bg-blobs" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+<main id="app"></main>
+<nav id="rail" aria-label="Switch game" hidden></nav>
+<div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
+
+<script>
+/* ============ DATA ============ */
+
+// Movie database shared by Blurred and Blockbuster.
+// [title, year, approx worldwide gross ($M, incl. re-releases), director, genres, stars, flags: s = sequel, b = won Best Picture]
+const MOVIES = [
+  ["Avatar",2009,2923,"James Cameron","sci-fi action adventure","Sam Worthington|Zoe Saldaña",""],
+  ["Avengers: Endgame",2019,2799,"the Russo brothers","superhero action","Robert Downey Jr.|Chris Evans","s"],
+  ["Avatar: The Way of Water",2022,2320,"James Cameron","sci-fi action adventure","Sam Worthington|Zoe Saldaña","s"],
+  ["Titanic",1997,2264,"James Cameron","romance drama","Leonardo DiCaprio|Kate Winslet","b"],
+  ["Star Wars: The Force Awakens",2015,2071,"J.J. Abrams","sci-fi action adventure","Daisy Ridley|Harrison Ford","s"],
+  ["Avengers: Infinity War",2018,2052,"the Russo brothers","superhero action","Robert Downey Jr.|Chris Evans","s"],
+  ["Spider-Man: No Way Home",2021,1922,"Jon Watts","superhero action","Tom Holland|Zendaya","s"],
+  ["Inside Out 2",2024,1699,"Kelsey Mann","animated comedy family","Amy Poehler","s"],
+  ["Jurassic World",2015,1671,"Colin Trevorrow","sci-fi action adventure","Chris Pratt","s"],
+  ["The Avengers",2012,1521,"Joss Whedon","superhero action","Robert Downey Jr.|Chris Evans",""],
+  ["Furious 7",2015,1515,"James Wan","action","Vin Diesel|Paul Walker","s"],
+  ["Top Gun: Maverick",2022,1496,"Joseph Kosinski","action drama","Tom Cruise","s"],
+  ["Frozen II",2019,1453,"Chris Buck & Jennifer Lee","animated musical family fantasy","Kristen Bell|Idina Menzel","s"],
+  ["Barbie",2023,1446,"Greta Gerwig","comedy fantasy","Margot Robbie|Ryan Gosling",""],
+  ["The Super Mario Bros. Movie",2023,1362,"Aaron Horvath & Michael Jelenic","animated comedy adventure family","Chris Pratt|Anya Taylor-Joy",""],
+  ["Black Panther",2018,1349,"Ryan Coogler","superhero action","Chadwick Boseman",""],
+  ["Harry Potter and the Deathly Hallows – Part 2",2011,1342,"David Yates","fantasy adventure","Daniel Radcliffe|Emma Watson","s"],
+  ["Deadpool & Wolverine",2024,1338,"Shawn Levy","superhero action comedy","Ryan Reynolds|Hugh Jackman","s"],
+  ["Frozen",2013,1290,"Chris Buck & Jennifer Lee","animated musical family fantasy","Kristen Bell|Idina Menzel",""],
+  ["Minions",2015,1159,"Pierre Coffin & Kyle Balda","animated comedy family","Sandra Bullock","s"],
+  ["The Lord of the Rings: The Return of the King",2003,1140,"Peter Jackson","fantasy adventure action","Elijah Wood|Viggo Mortensen","sb"],
+  ["Jurassic Park",1993,1100,"Steven Spielberg","sci-fi adventure","Sam Neill|Jeff Goldblum",""],
+  ["Joker",2019,1079,"Todd Phillips","thriller drama crime","Joaquin Phoenix",""],
+  ["Toy Story 4",2019,1073,"Josh Cooley","animated comedy family","Tom Hanks|Tim Allen","s"],
+  ["Toy Story 3",2010,1067,"Lee Unkrich","animated comedy family","Tom Hanks|Tim Allen","s"],
+  ["Pirates of the Caribbean: Dead Man's Chest",2006,1066,"Gore Verbinski","action fantasy adventure","Johnny Depp|Orlando Bloom","s"],
+  ["Finding Dory",2016,1029,"Andrew Stanton","animated comedy family","Ellen DeGeneres","s"],
+  ["Zootopia",2016,1025,"Byron Howard & Rich Moore","animated comedy family","Ginnifer Goodwin|Jason Bateman",""],
+  ["Harry Potter and the Sorcerer's Stone",2001,1020,"Chris Columbus","fantasy adventure family","Daniel Radcliffe|Emma Watson",""],
+  ["The Dark Knight",2008,1006,"Christopher Nolan","superhero action thriller crime","Christian Bale|Heath Ledger","s"],
+  ["Oppenheimer",2023,976,"Christopher Nolan","drama","Cillian Murphy","b"],
+  ["The Lion King",1994,968,"Roger Allers & Rob Minkoff","animated musical family drama","Matthew Broderick|James Earl Jones",""],
+  ["Jumanji: Welcome to the Jungle",2017,962,"Jake Kasdan","action comedy adventure","Dwayne Johnson|Kevin Hart","s"],
+  ["Finding Nemo",2003,941,"Andrew Stanton","animated comedy family adventure","Albert Brooks|Ellen DeGeneres",""],
+  ["Shrek 2",2004,932,"Andrew Adamson","animated comedy family fantasy","Mike Myers|Eddie Murphy","s"],
+  ["Inception",2010,837,"Christopher Nolan","sci-fi action thriller","Leonardo DiCaprio",""],
+  ["Independence Day",1996,817,"Roland Emmerich","sci-fi action","Will Smith|Jeff Goldblum",""],
+  ["Coco",2017,814,"Lee Unkrich","animated musical family fantasy","Anthony Gonzalez",""],
+  ["E.T. the Extra-Terrestrial",1982,793,"Steven Spielberg","sci-fi family adventure","Henry Thomas|Drew Barrymore",""],
+  ["Star Wars",1977,775,"George Lucas","sci-fi action adventure","Mark Hamill|Harrison Ford",""],
+  ["Guardians of the Galaxy",2014,773,"James Gunn","superhero action comedy sci-fi","Chris Pratt|Zoe Saldaña",""],
+  ["Wicked",2024,756,"Jon M. Chu","musical fantasy","Cynthia Erivo|Ariana Grande",""],
+  ["The Matrix Reloaded",2003,741,"the Wachowskis","sci-fi action","Keanu Reeves","s"],
+  ["Up",2009,735,"Pete Docter","animated comedy family adventure","Ed Asner",""],
+  ["Interstellar",2014,730,"Christopher Nolan","sci-fi drama adventure","Matthew McConaughey|Anne Hathaway",""],
+  ["Gravity",2013,723,"Alfonso Cuarón","sci-fi thriller","Sandra Bullock|George Clooney",""],
+  ["Dune: Part Two",2024,714,"Denis Villeneuve","sci-fi action adventure","Timothée Chalamet|Zendaya","s"],
+  ["Transformers",2007,709,"Michael Bay","sci-fi action","Shia LaBeouf",""],
+  ["The Hunger Games",2012,694,"Gary Ross","sci-fi action adventure","Jennifer Lawrence",""],
+  ["Moana",2016,687,"Ron Clements & John Musker","animated musical family adventure","Auli'i Cravalho|Dwayne Johnson",""],
+  ["Forrest Gump",1994,678,"Robert Zemeckis","drama comedy romance","Tom Hanks","b"],
+  ["The Sixth Sense",1999,673,"M. Night Shyamalan","thriller horror drama","Bruce Willis",""],
+  ["The Incredibles",2004,632,"Brad Bird","animated superhero action family","Craig T. Nelson|Holly Hunter",""],
+  ["The Martian",2015,630,"Ridley Scott","sci-fi drama adventure","Matt Damon",""],
+  ["Ratatouille",2007,624,"Brad Bird","animated comedy family","Patton Oswalt",""],
+  ["Men in Black",1997,589,"Barry Sonnenfeld","sci-fi action comedy","Will Smith|Tommy Lee Jones",""],
+  ["Iron Man",2008,585,"Jon Favreau","superhero action","Robert Downey Jr.",""],
+  ["Ready Player One",2018,583,"Steven Spielberg","sci-fi action adventure","Tye Sheridan",""],
+  ["Monsters, Inc.",2001,577,"Pete Docter","animated comedy family","Billy Crystal|John Goodman",""],
+  ["Armageddon",1998,553,"Michael Bay","sci-fi action","Bruce Willis|Ben Affleck",""],
+  ["Dunkirk",2017,527,"Christopher Nolan","war drama action","Fionn Whitehead|Tom Hardy",""],
+  ["WALL-E",2008,521,"Andrew Stanton","animated sci-fi family","Ben Burtt",""],
+  ["Terminator 2: Judgment Day",1991,520,"James Cameron","sci-fi action","Arnold Schwarzenegger|Linda Hamilton","s"],
+  ["Twister",1996,495,"Jan de Bont","action thriller","Helen Hunt|Bill Paxton",""],
+  ["Shrek",2001,488,"Andrew Adamson & Vicky Jenson","animated comedy family fantasy","Mike Myers|Eddie Murphy",""],
+  ["Saving Private Ryan",1998,482,"Steven Spielberg","war drama action","Tom Hanks|Matt Damon",""],
+  ["Home Alone",1990,476,"Chris Columbus","comedy family","Macaulay Culkin",""],
+  ["Jaws",1975,476,"Steven Spielberg","thriller adventure","Roy Scheider|Richard Dreyfuss",""],
+  ["La La Land",2016,472,"Damien Chazelle","musical romance drama","Ryan Gosling|Emma Stone",""],
+  ["The Matrix",1999,467,"the Wachowskis","sci-fi action","Keanu Reeves|Laurence Fishburne",""],
+  ["Gladiator",2000,465,"Ridley Scott","action drama","Russell Crowe","b"],
+  ["Signs",2002,408,"M. Night Shyamalan","sci-fi thriller horror","Mel Gibson",""],
+  ["Dune",2021,407,"Denis Villeneuve","sci-fi action adventure","Timothée Chalamet|Zendaya",""],
+  ["Spirited Away",2001,395,"Hayao Miyazaki","animated fantasy family","Rumi Hiiragi",""],
+  ["Toy Story",1995,394,"John Lasseter","animated comedy family","Tom Hanks|Tim Allen",""],
+  ["The Wolf of Wall Street",2013,392,"Martin Scorsese","comedy crime drama","Leonardo DiCaprio",""],
+  ["Raiders of the Lost Ark",1981,390,"Steven Spielberg","action adventure","Harrison Ford",""],
+  ["Spider-Man: Into the Spider-Verse",2018,384,"Bob Persichetti, Peter Ramsey & Rodney Rothman","animated superhero action","Shameik Moore",""],
+  ["Back to the Future",1985,381,"Robert Zemeckis","sci-fi comedy adventure","Michael J. Fox|Christopher Lloyd",""],
+  ["Mad Max: Fury Road",2015,380,"George Miller","action sci-fi adventure","Tom Hardy|Charlize Theron","s"],
+  ["Edge of Tomorrow",2014,370,"Doug Liman","sci-fi action","Tom Cruise|Emily Blunt",""],
+  ["Tenet",2020,365,"Christopher Nolan","sci-fi action thriller","John David Washington|Robert Pattinson",""],
+  ["Minority Report",2002,358,"Steven Spielberg","sci-fi action thriller","Tom Cruise",""],
+  ["Top Gun",1986,357,"Tony Scott","action drama","Tom Cruise",""],
+  ["Catch Me If You Can",2002,352,"Steven Spielberg","crime comedy drama","Leonardo DiCaprio|Tom Hanks",""],
+  ["Back to the Future Part II",1989,332,"Robert Zemeckis","sci-fi comedy adventure","Michael J. Fox|Christopher Lloyd","s"],
+  ["Free Guy",2021,331,"Shawn Levy","action comedy sci-fi","Ryan Reynolds",""],
+  ["Close Encounters of the Third Kind",1977,306,"Steven Spielberg","sci-fi drama","Richard Dreyfuss",""],
+  ["Ghostbusters",1984,295,"Ivan Reitman","comedy sci-fi fantasy","Bill Murray|Dan Aykroyd",""],
+  ["The Silence of the Lambs",1991,273,"Jonathan Demme","thriller horror crime","Jodie Foster|Anthony Hopkins","b"],
+  ["The Truman Show",1998,264,"Peter Weir","comedy drama","Jim Carrey",""],
+  ["The Fifth Element",1997,263,"Luc Besson","sci-fi action","Bruce Willis|Milla Jovovich",""],
+  ["Parasite",2019,262,"Bong Joon-ho","thriller drama comedy","Song Kang-ho","b"],
+  ["Us",2019,256,"Jordan Peele","horror thriller","Lupita Nyong'o",""],
+  ["Get Out",2017,255,"Jordan Peele","horror thriller","Daniel Kaluuya",""],
+  ["The Godfather",1972,250,"Francis Ford Coppola","crime drama","Marlon Brando|Al Pacino","b"],
+  ["Howl's Moving Castle",2004,236,"Hayao Miyazaki","animated fantasy family romance","Chieko Baisho",""],
+  ["Pulp Fiction",1994,214,"Quentin Tarantino","crime thriller","John Travolta|Samuel L. Jackson",""],
+  ["Arrival",2016,203,"Denis Villeneuve","sci-fi drama","Amy Adams",""],
+  ["Jaws 2",1978,187,"Jeannot Szwarc","thriller","Roy Scheider","s"],
+  ["Alien",1979,185,"Ridley Scott","sci-fi horror","Sigourney Weaver",""],
+  ["Nope",2022,172,"Jordan Peele","horror sci-fi","Daniel Kaluuya|Keke Palmer",""],
+  ["Everything Everywhere All at Once",2022,143,"Daniel Kwan & Daniel Scheinert","sci-fi comedy action","Michelle Yeoh","b"],
+  ["Mean Girls",2004,130,"Mark Waters","comedy","Lindsay Lohan|Rachel McAdams",""],
+  ["The Shawshank Redemption",1994,73,"Frank Darabont","drama crime","Tim Robbins|Morgan Freeman",""],
+  ["Groundhog Day",1993,71,"Harold Ramis","comedy fantasy romance","Bill Murray",""],
+  ["Ferris Bueller's Day Off",1986,70,"John Hughes","comedy","Matthew Broderick",""],
+  ["The Breakfast Club",1985,51,"John Hughes","comedy drama","Emilio Estevez|Molly Ringwald",""],
+  ["Whiplash",2014,49,"Damien Chazelle","drama","Miles Teller|J.K. Simmons",""],
+  ["Blade Runner",1982,41,"Ridley Scott","sci-fi thriller","Harrison Ford",""],
+  ["Memento",2000,40,"Christopher Nolan","thriller crime","Guy Pearce",""]
+].map(([name,year,g,dir,genres,stars,f])=>({name,year,g,dir,genres:genres.split(" "),stars:stars.split("|"),seq:f.includes("s"),bp:f.includes("b")}));
+
+// Blurred: five hints per movie, vaguest first, most obvious last.
+const BLURRED = [
+  {movie:"The Matrix", hints:["A '90s sci-fi movie","An action film famous for its slow-motion 'bullet time' effects","Directed by the Wachowskis","Stars Keanu Reeves","A hacker learns reality is a computer simulation and has to choose between a red pill and a blue pill"]},
+  {movie:"Finding Nemo", hints:["A 2000s animated movie","Almost the whole story takes place underwater","A Pixar film directed by Andrew Stanton","Features a very forgetful fish voiced by Ellen DeGeneres","A clownfish crosses the ocean to rescue his son from a dentist's fish tank"]},
+  {movie:"Jaws", hints:["A '70s thriller","Often called the first summer blockbuster","Directed by Steven Spielberg","Set in the beach town of Amity Island","A great white shark attacks swimmers, and the police chief decides they need a bigger boat"]},
+  {movie:"E.T. the Extra-Terrestrial", hints:["An '80s sci-fi movie","A family film about friendship and saying goodbye","Directed by Steven Spielberg","A boy hides a strange visitor in his closet and lures him with Reese's Pieces","A stranded alien wants to phone home, and a bike flies across the moon"]},
+  {movie:"Forrest Gump", hints:["A '90s drama that won Best Picture","The story spans about thirty years of American history","Directed by Robert Zemeckis","Stars Tom Hanks","A kind man from Alabama tells his life story to strangers on a bus-stop bench, box of chocolates included"]},
+  {movie:"Home Alone", hints:["A 1990 comedy","Set at Christmastime in suburban Chicago","Written by John Hughes","Two burglars named Harry and Marv get outsmarted with booby traps","An 8-year-old is accidentally left behind when his family flies to Paris"]},
+  {movie:"The Lion King", hints:["A '90s animated movie","A musical with songs by Elton John","Set on the African savanna","A villainous uncle named Scar takes the throne","A lion cub runs away after his father dies, then returns to reclaim Pride Rock"]},
+  {movie:"Gladiator", hints:["A 2000 action movie that won Best Picture","A historical epic set in ancient Rome","Directed by Ridley Scott","Stars Russell Crowe","A betrayed general is sold into slavery and fights in the Colosseum for revenge"]},
+  {movie:"Shrek", hints:["An early-2000s animated comedy","Won the first-ever Oscar for Best Animated Feature","Pokes fun at classic fairy tales","Features a talking donkey voiced by Eddie Murphy","A grumpy green ogre sets out to rescue Princess Fiona"]}
+];
+
+// Blockbuster: each round adds a criterion. Rounds 1–4 are checked against MOVIES;
+// round 5 is a final clue only the Blockbuster fits.
+const RULE = {
+  genre:g=>({label:`It's ${/^[aeiou]/.test(g)?"an":"a"} ${g} movie`,test:m=>m.genres.includes(g)}),
+  since:y=>({label:`Released in ${y} or later`,test:m=>m.year>=y}),
+  before:y=>({label:`Released before ${y}`,test:m=>m.year<y}),
+  decade:d=>({label:`Released in the ${d}s`,test:m=>m.year>=d&&m.year<d+10}),
+  gross:x=>({label:`Made over ${x>=1000?"$"+x/1000+" billion":"$"+x+" million"} worldwide`,test:m=>m.g>x}),
+  dir:n=>({label:`Directed by ${n}`,test:m=>m.dir===n}),
+  star:n=>({label:`Stars ${n}`,test:m=>m.stars.includes(n)}),
+  sequel:()=>({label:"It's a sequel",test:m=>m.seq}),
+  bp:()=>({label:"Won the Oscar for Best Picture",test:m=>m.bp})
+};
+const BLOCKBUSTERS = [
+  {movie:"Inception", rules:[RULE.genre("sci-fi"),RULE.since(2000),RULE.gross(500),RULE.dir("Christopher Nolan")], final:"A crew of thieves breaks into people's dreams to plant an idea."},
+  {movie:"Titanic", rules:[RULE.genre("drama"),RULE.decade(1990),RULE.gross(400),RULE.bp()], final:"A luxury ocean liner hits an iceberg on its first voyage."},
+  {movie:"Jurassic Park", rules:[RULE.genre("sci-fi"),RULE.before(2000),RULE.gross(500),RULE.dir("Steven Spielberg")], final:"Cloned dinosaurs escape at an island theme park."},
+  {movie:"The Dark Knight", rules:[RULE.genre("action"),RULE.sequel(),RULE.decade(2000),RULE.gross(900)], final:"A chaotic, clown-faced criminal pushes Gotham City to the brink."},
+  {movie:"Get Out", rules:[RULE.genre("thriller"),RULE.decade(2010),RULE.genre("horror"),RULE.dir("Jordan Peele")], final:"A weekend meeting the girlfriend's parents turns sinister, with a hypnotic teacup."},
+  {movie:"Spirited Away", rules:[RULE.genre("animated"),RULE.genre("fantasy"),RULE.before(2010),RULE.dir("Hayao Miyazaki")], final:"A girl works at a bathhouse for spirits after her parents turn into pigs."},
+  {movie:"Back to the Future", rules:[RULE.genre("comedy"),RULE.decade(1980),RULE.genre("sci-fi"),RULE.dir("Robert Zemeckis")], final:"A teenager travels back to 1955 in a DeLorean."},
+  {movie:"Toy Story 3", rules:[RULE.genre("animated"),RULE.sequel(),RULE.gross(1000),RULE.star("Tom Hanks")], final:"Andy leaves for college and his toys end up at a daycare."},
+  {movie:"Top Gun: Maverick", rules:[RULE.genre("action"),RULE.since(2020),RULE.sequel(),RULE.gross(1400)], final:"A veteran Navy pilot comes back to train a new class of hotshot aviators."}
+];
+const BB_BONUS=[2500,2000,1500,1000,500];
+
+/* ============ SITE LINKS ============ */
+// Update these once each site has its own domain.
+const SPEC_URL=location.pathname.startsWith("/blockbuster")?"/":"https://hunchdaily.net/";
+
+/* ============ HELPERS ============ */
+const LAUNCH = new Date(2026,10,1);
+function dayIndex(d=new Date()){const a=new Date(d.getFullYear(),d.getMonth(),d.getDate());return Math.round((a-LAUNCH)/864e5);}
+const DAY = dayIndex();
+const PNUM = DAY+1;
+const mod=(n,m)=>((n%m)+m)%m;
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/&/g,"and").replace(/^the\s+/,"").replace(/[^a-z0-9]/g,"");
+function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;};}
+function hash(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619);}return h>>>0;}
+
+const mem={};
+const store={
+  get(k,d){try{const v=localStorage.getItem("bbd:"+k);if(v!==null)return JSON.parse(v);}catch(e){} return k in mem?JSON.parse(mem[k]):d;},
+  set(k,v){mem[k]=JSON.stringify(v);try{localStorage.setItem("bbd:"+k,mem[k]);}catch(e){}if(typeof renderRail==="function")renderRail();}
+};
+
+function fmtMoney(v){
+  const t=(n,s)=>(Math.round(n*10)/10).toString().replace(/\.0$/,"")+s;
+  if(v>=1e9)return"$"+t(v/1e9,"B"); if(v>=1e6)return"$"+t(v/1e6,"M"); if(v>=1e3)return"$"+t(v/1e3,"K"); return"$"+Math.round(v);
+}
+function fmtGross(m){return m>=1000?"$"+(m/1000).toFixed(2)+"B":"$"+m+"M";}
+function parseMoney(s){
+  const m=s.toLowerCase().replace(/[$,\s]/g,"").match(/^(\d*\.?\d+)(k|thousand|m|mil|million|b|bn|billion)?$/);
+  if(!m)return null; let v=parseFloat(m[1]); const u=m[2]||"";
+  if(u.startsWith("k")||u==="thousand")v*=1e3; else if(u.startsWith("m"))v*=1e6; else if(u.startsWith("b"))v*=1e9;
+  return v>0?v:null;
+}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),1600);}
+
+const MOVIE_KEYS={}; MOVIES.forEach(m=>MOVIE_KEYS[norm(m.name)]=m);
+
+/* ============ ICONS ============ */
+const IC={
+  jackpot:'<svg viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="16" cy="17" r="6"/><circle cx="33" cy="15" r="5"/><path d="M5 39c1-7 6-11 11-11s10 4 11 11"/><path d="M25 27c2-2 5-3 8-3 5 0 9 4 10 11"/><path d="M38 4l1 3M44 9l-3 1M42 3l-2 2" stroke-width="2.5"/></svg>',
+  era:'<svg class="ic-era" viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M13 6h22M13 42h22"/><path d="M16 6c0 11 8 12 8 18s-8 7-8 18M32 6c0 11-8 12-8 18s8 7 8 18"/><path class="sand" d="M19 38h10l-5-5z" fill="#141414"/></svg>',
+  sold:'<svg class="ic-sold" viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linejoin="round"><path d="M6 25 25 6h17v17L23 42z"/><circle cx="34" cy="14" r="3.2" fill="#141414"/><path d="M17 26l6 6M21 22l6 6" stroke-linecap="round"/></svg>',
+  specs:'<svg class="ic-specs" viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round"><path d="M7 34a17 17 0 1 1 34 0"/><path class="needle" d="M24 34l10-12"/><circle cx="24" cy="34" r="3" fill="#141414"/><path d="M12 22l3 2M24 15v3M36 22l-3 2"/></svg>',
+  blurred:'<svg class="ic-blurred" viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="9" width="36" height="30" rx="4"/><path d="M6 16h36M6 32h36M13 9v7M24 9v7M35 9v7M13 32v7M24 32v7M35 32v7"/></svg>',
+  boxoffice:'<svg class="ic-boxoffice" viewBox="0 0 48 48" fill="none" stroke="#141414" stroke-width="3" stroke-linejoin="round"><path d="M5 13h38v7a4 4 0 0 0 0 8v7H5v-7a4 4 0 0 0 0-8z"/><path d="M31 15v18" stroke-dasharray="3 4" stroke-linecap="round"/><path class="star" d="m17 19 2 4h4l-3 3 1 4-4-2-4 2 1-4-3-3h4z" fill="#141414" stroke-width="1"/></svg>'
+};
+
+const GAMES_ALL_=[
+  {id:"era",name:"Era",tag:"Guess the year",color:"#F2C14E",blurb:"Five clues from one year in history. Name the year in six guesses.",off:0},
+  {id:"sold",name:"Sold",tag:"Price is right",color:"#86C98A",blurb:"A real auction lot. Guess what it sold for, with color-coded higher or lower hints.",off:3},
+  {id:"specs",name:"Spec Sheet",tag:"Guess the car",color:"#F27A62",blurb:"Specs are revealed one at a time. Name the car.",off:5},
+  {id:"blurred",name:"Blurred",tag:"Guess the movie",color:"#AE96DE",blurb:"Five rounds, five hints, from vague to obvious. Name the movie.",off:2},
+  {id:"boxoffice",name:"Blockbuster",tag:"Narrow it down",color:"#6AA8EC",blurb:"Name a movie that fits the clues as they get more specific. Land the Blockbuster for big points.",off:4}
+];
+
+const GAMES=GAMES_ALL_.filter(g=>["blurred","boxoffice"].includes(g.id));
+
+/* ============ GAME DEFINITIONS ============ */
+const DEFS={
+  blurred:{
+    data:BLURRED, max:5, how:"Name the movie in 5 rounds. Each round adds a hint, from vague to obvious. 🟨 means your guess is from the right decade.",
+    placeholder:"Start typing a movie…", options:MOVIES.map(m=>m.name),
+    clues:(p,step)=>`<ol class="cluelist">${p.hints.map((h,i)=>i<=step?`<li>${esc(h)}</li>`:`<li class="locked">Hint ${i+1} unlocks in round ${i+1}</li>`).join("")}</ol>`,
+    parse(s){const m=MOVIE_KEYS[norm(s)];return m?{value:m.name}:{error:"That movie isn't on the list. Pick one of the suggestions."};},
+    label:v=>v,
+    judge(v,p){
+      if(v===p.movie)return{s:"hit",note:"Correct"};
+      const a=MOVIES.find(m=>m.name===p.movie).year,g=MOVIES.find(m=>m.name===v).year;
+      const dir=a>g?"↑ Newer":a<g?"↓ Older":"Same year";
+      return{s:Math.floor(a/10)===Math.floor(g/10)?"close":"miss",note:dir};
+    },
+    answer:p=>p.movie, reveal:p=>{const m=MOVIES.find(x=>x.name===p.movie);return`<p>${m.year} · directed by ${esc(m.dir)}</p>`;}
+  }
+};
+const EMO={hit:"🟩",close:"🟨",miss:"⬜",far:"🟥"};
+
+/* ============ ROUTER / HUB ============ */
+const app=document.getElementById("app");
+document.getElementById("today").textContent=new Date().toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+let practice=null;
+
+function dailyStatus(g){
+  const st=store.get(g.id+":"+DAY,null);
+  if(!st||(!st.done&&!(st.guesses&&st.guesses.length)&&!(st.picks&&st.picks.length)))return{label:"Play",done:false};
+  if(!st.done)return{label:"Continue",done:false};
+  if(g.id==="boxoffice")return{label:st.found?`Blockbuster · ${st.score.toLocaleString()} pts`:`${st.score.toLocaleString()} pts`,done:true};
+  return{label:st.won?`Solved in ${st.guesses.length}`:"Missed",done:true};
+}
+const CUBES=[
+  {id:"blurred",x:"4%",y:"12%",s:78,z:26,d:17,b:6.5,rx:-24},
+  {id:"jackpot",x:"15%",y:"60%",s:50,z:14,d:12,b:5.5,rx:-10,hide:1},
+  {id:"boxoffice",x:"86%",y:"8%",s:66,z:22,d:19,b:7,rx:-32},
+  {id:"jackpot",x:"77%",y:"62%",s:54,z:16,d:14,b:6,rx:-14,hide:1},
+  {id:"blurred",x:"67%",y:"7%",s:42,z:10,d:11,b:5,rx:-18}
+];
+const canHover=()=>matchMedia("(hover:hover) and (pointer:fine)").matches&&!matchMedia("(prefers-reduced-motion: reduce)").matches;
+function renderHub(){
+  const color=id=>id==="jackpot"?"#F08BB6":GAMES.find(g=>g.id===id).color;
+  const cubes=CUBES.map((c,k)=>`<div class="float${c.hide?" hide-sm":""}" style="--x:${c.x};--y:${c.y};--z:${c.z};--k:${k}">
+      <div class="bob" style="--b:${c.b}s"><div class="cube" style="--s:${c.s}px;--d:${c.d}s;--rx0:${c.rx}deg;--c:${color(c.id)}">${Array(6).fill(`<div class="f">${IC[c.id]}</div>`).join("")}</div>
+      <div class="shadow" style="--s:${c.s}px"></div></div></div>`).join("");
+  app.innerHTML=`
+    <section class="hero">
+      <div class="stage" aria-hidden="true">${cubes}</div>
+      <div class="bulbs" aria-hidden="true">${"<i></i>".repeat(18)}</div>
+      <h1 aria-label="Blockbuster Daily">${[..."Blockbuster"].map((ch,i)=>`<span class="ch" style="--i:${i}">${ch}</span>`).join("")}</h1>
+      <div class="ticket">DAILY</div>
+      <p>Lights. Camera. Guess.</p>
+      <div class="chip"><span class="live"></span>Puzzle #${PNUM} · next one in <b id="heroCd">--:--:--</b></div>
+    </section>
+    <a class="pbanner" href="#jackpot"><div class="pb-av">${["M","A","J","K"].map((c,i)=>`<span style="--c:${["#F2C14E","#86C98A","#6AA8EC","#F08BB6"][i]};--i:${i}">${c}</span>`).join("")}</div>
+      <div><span class="new">NEW · MULTIPLAYER</span><h2>Jackpot</h2><p>Play live with up to 8 friends on their phones or computers. Name anything that fits the clues, and race to hit the Jackpot.</p></div>
+      <span class="pill">Start a game</span></a>
+    <section class="grid">${GAMES.map((g,n)=>{const s=dailyStatus(g);return`
+      <a class="card" href="#${g.id}" style="--c:${g.color};--n:${n}">
+        <div class="band">${IC[g.id]}</div>
+        <div class="body"><h2>${g.name}</h2><div class="tag">${g.tag}</div><p>${g.blurb}</p>
+          <div class="foot"><span class="pill ${s.done?"done":""}" style="--n:${n}">${s.label}</span><span class="num">#${PNUM}</span></div></div>
+      </a>`;}).join("")}</section>
+    <a class="xsite" href="${SPEC_URL}"><span class="xs-ic">🏎️</span><span><b>Into cars?</b> Play <u>Spec Sheet</u>, the daily guess-the-car game.</span><span class="xs-go">→</span></a>
+    <p class="note">Your progress and streaks are saved in this browser.</p>`;
+  tickHero();
+  if(canHover())app.querySelectorAll(".card").forEach(card=>{
+    card.addEventListener("pointermove",e=>{const r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+      card.style.setProperty("--rx",((.5-y)*9).toFixed(2)+"deg");card.style.setProperty("--ry",((x-.5)*11).toFixed(2)+"deg");
+      card.style.setProperty("--gx",(x*100).toFixed(1)+"%");card.style.setProperty("--gy",(y*100).toFixed(1)+"%");});
+    card.addEventListener("pointerleave",()=>{card.style.setProperty("--rx","0deg");card.style.setProperty("--ry","0deg");});
+  });
+}
+function tickHero(){
+  const el=document.getElementById("heroCd");if(!el)return;
+  const n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),d=Math.max(0,m-n);
+  el.textContent=[d/36e5,d/6e4%60,d/1e3%60].map(x=>String(Math.floor(x)).padStart(2,"0")).join(":");
+}
+setInterval(tickHero,1000);
+window.addEventListener("pointermove",e=>{
+  if(!canHover())return;const h=document.querySelector(".hero");if(!h)return;
+  h.style.setProperty("--mx",((e.clientX/innerWidth-.5)*2).toFixed(3));h.style.setProperty("--my",((e.clientY/innerHeight-.5)*2).toFixed(3));
+});
+
+
+/* ============ GAME SWITCHER ============ */
+const railEl=document.getElementById("rail");
+const HOME_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>';
+const STATS_IC='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>';
+function renderRail(){
+  const h=location.hash.slice(1),onGame=GAMES.some(g=>g.id===h);
+  if(!onGame){railEl.hidden=true;railEl.classList.remove("in");document.body.classList.remove("has-rail");return;}
+  const wasHidden=railEl.hidden;
+  railEl.innerHTML=`<a class="ri u" href="#" data-tip="All games" aria-label="All games">${HOME_IC}</a><span class="sep"></span>`+
+    GAMES.map(g=>{const st=store.get(g.id+":"+DAY,null),s=dailyStatus(g);
+      const badge=s.done?(g.id==="boxoffice"?(st&&st.found?'<span class="st done">✓</span>':'<span class="st miss">✕</span>'):(st&&st.won?'<span class="st done">✓</span>':'<span class="st miss">✕</span>')):(s.label==="Continue"?'<span class="st prog"></span>':"");
+      return`<a class="ri g${g.id===h?" on":""}" href="#${g.id}" style="--c:${g.color}" data-tip="${g.name} · ${s.label}" aria-label="${g.name}, ${s.label}"${g.id===h?' aria-current="page"':""}>${IC[g.id]}${badge}</a>`;}).join("")+
+    `<span class="sep"></span><a class="ri u" href="#stats" data-tip="Your stats" aria-label="Your stats">${STATS_IC}</a>`;
+  railEl.hidden=false;document.body.classList.add("has-rail");
+  if(wasHidden){railEl.classList.remove("in");void railEl.offsetWidth;railEl.classList.add("in");}
+}
+/* ============ EFFECTS ============ */
+function fx(board,fresh,err){
+  if(err){const f=board.querySelector("form");if(f){f.classList.remove("shake");void f.offsetWidth;f.classList.add("shake");}}
+  if(fresh<0)return;
+  const row=board.querySelectorAll(".rows .row")[fresh];if(row)row.classList.add("flip");
+  if(!row||row.classList.contains("hit")||row.classList.contains("bb"))return;
+  const open=board.querySelectorAll(".cluelist li:not(.locked), .specs .spec:not(.locked)");
+  if(open.length>1)open[open.length-1].classList.add("fresh");
+}
+function confetti(colors,n=150){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  let c=document.getElementById("fx");if(!c){c=document.createElement("canvas");c.id="fx";document.body.appendChild(c);}
+  const W=innerWidth,H=innerHeight,dpr=Math.min(2,devicePixelRatio||1),g=c.getContext("2d");
+  c.width=W*dpr;c.height=H*dpr;g.setTransform(dpr,0,0,dpr,0,0);
+  const P=Array.from({length:n},(_,i)=>{const left=i%2===0;return{x:left?-10:W+10,y:H*.62+Math.random()*H*.25,vx:(left?1:-1)*(5+Math.random()*10)*(W/900+.4),vy:-(11+Math.random()*11),
+    r:Math.random()*6,vr:(Math.random()-.5)*.35,w:7+Math.random()*7,h:5+Math.random()*6,c:colors[i%colors.length],dot:Math.random()<.28};});
+  let t=0;cancelAnimationFrame(confetti.raf);
+  const step=()=>{t++;g.clearRect(0,0,W,H);let alive=0;
+    for(const p of P){p.vy+=.3;p.vx*=.986;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;if(p.y<H+30)alive++;
+      g.save();g.translate(p.x,p.y);g.rotate(p.r);g.globalAlpha=Math.max(0,Math.min(1,(260-t)/60));g.fillStyle=p.c;
+      if(p.dot){g.beginPath();g.arc(0,0,p.w/2.6,0,7);g.fill();}else g.fillRect(-p.w/2,-p.h/2,p.w,p.h*Math.abs(Math.cos(t/7+p.r)));g.restore();}
+    if(alive&&t<260)confetti.raf=requestAnimationFrame(step);else g.clearRect(0,0,W,H);};
+  step();
+}
+function countUp(root){
+  if(app.classList.contains("still")||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  root.querySelectorAll(".tile b,.mini b").forEach(el=>{
+    const m=el.textContent.match(/^([\d,]+)(%?)$/);if(!m)return;const end=+m[1].replace(/,/g,""),suf=m[2];if(!end)return;
+    const t0=performance.now(),dur=900;
+    const f=now=>{const k=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-k,3);el.textContent=Math.round(end*e).toLocaleString()+suf;if(k<1)requestAnimationFrame(f);};
+    requestAnimationFrame(f);
+  });
+}
+
+function route(){
+  closeModal();
+  cancelAnimationFrame(confetti.raf);const fxc=document.getElementById("fx");if(fxc)fxc.getContext("2d").clearRect(0,0,fxc.width,fxc.height);
+  app.classList.remove("still");
+  renderRail();
+  const h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);
+  document.getElementById("statsBtn").classList.toggle("on",h==="stats");
+  if(/^(party|jackpot)(-|$)/.test(h)){practice=null;if(window.renderParty)renderParty();else app.innerHTML='<div class="pwait"><span class="spin"></span>Loading…</div>';}
+  else if(h==="stats"){practice=null;renderStats();}
+  else if(!g){practice=null;renderHub();}else{if(practice&&practice.id!==g.id)practice=null;renderGame(g);}
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",route);
+// Keep every open tab in sync: redraw when another tab saves progress, or when this tab comes back into view.
+function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;if(/^#(party|jackpot)/.test(location.hash))return;app.classList.add("still");const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);renderRail();if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
+window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("bbd:"))refresh();});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
+
+function renderGame(g){
+  closeModal();
+  const isP=!!practice;
+  app.innerHTML=`<div class="game" style="--c:${g.color}">
+    <a href="#" class="back">← All games</a>
+    <div class="ghead"><div class="gicon">${IC[g.id]}</div><div><h1>${g.name}</h1><div class="gsub">${g.tag} · ${isP?"Practice round":"#"+PNUM}</div></div></div>
+    <p class="how">${g.id==="boxoffice"?"Each round adds a criterion, and they get more specific. Name any movie that fits all of them to score, with later rounds worth more. Every day one movie, the Blockbuster, is what the criteria describe. Name it for a huge bonus, and the earlier you get it, the bigger the bonus.":DEFS[g.id].how}</p>
+    <div id="board"></div></div>`;
+  const board=document.getElementById("board");
+  const ctx={g,practice:isP,key:g.id+":"+DAY,label:isP?"Practice":"#"+PNUM};
+  if(g.id==="boxoffice"){boxOffice(board,ctx,isP?practice.idx:mod(DAY+g.off,BLOCKBUSTERS.length));return;}
+  const def=DEFS[g.id];
+  const idx=isP?practice.idx:mod(DAY+g.off,def.data.length);
+  guessGame(board,def,def.data[idx],ctx,idx);
+}
+
+/* ============ GUESS ENGINE ============ */
+function guessGame(board,def,p,ctx,idx){
+  const MAX=def.max||6;
+  let st=ctx.practice?{guesses:[],done:false,won:false}:store.get(ctx.key,{guesses:[],done:false,won:false});
+  const save=()=>{if(!ctx.practice)store.set(ctx.key,st);};
+  let fresh=-1;
+  function render(err=""){
+    const step=st.done?99:st.guesses.length;
+    const rows=[];
+    for(let i=0;i<MAX;i++){
+      const v=st.guesses[i];
+      if(v===undefined){rows.push(`<div class="row empty"><span class="i">${i+1}</span><span></span><span></span></div>`);continue;}
+      const j=def.judge(v,p);
+      rows.push(`<div class="row ${j.s}"><span class="i">${i+1}</span><span>${esc(def.label(v))}</span><span class="n">${esc(j.note)}</span></div>`);
+    }
+    const input=def.options?`<datalist id="opts">${def.options.map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`:"";
+    board.innerHTML=`${def.clues(p,step)}<div class="rows">${rows.join("")}</div>${st.done?`
+      <div class="answer"><div class="answer-k">${st.won?"You got it":"The answer was"}</div><div class="answer-v">${esc(def.answer(p))}</div>${def.reveal?def.reveal(p):""}</div>
+      <div class="actions"><button class="btn" data-a="res">See results</button><button class="btn ghost" data-a="prac">Practice another</button></div>`:`
+      <form class="guess" autocomplete="off"><input id="gin" ${def.options?'list="opts"':""} inputmode="${def.inputmode||"text"}" placeholder="${esc(def.placeholder)}" aria-label="Your guess"><button class="btn" type="submit">Guess</button></form>${input}<div class="err">${esc(err)}</div>`}`;
+    fx(board,fresh,err);fresh=-1;
+    const f=board.querySelector("form");
+    if(f){f.addEventListener("submit",onGuess);const inp=board.querySelector("#gin");if(st.guesses.length)inp.focus();}
+    board.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
+      if(b.dataset.a==="res")showResult();
+      else{let n;do{n=Math.floor(Math.random()*def.data.length);}while(def.data.length>1&&n===idx);practice={id:ctx.g.id,idx:n};renderGame(ctx.g);window.scrollTo(0,0);}
+    });
+  }
+  function onGuess(e){
+    e.preventDefault();
+    const raw=board.querySelector("#gin").value.trim();if(!raw)return;
+    const r=def.parse(raw);if(r.error){render(r.error);board.querySelector("#gin").value=raw;return;}
+    if(st.guesses.some(x=>def.label(x)===def.label(r.value))){render("You already guessed that.");return;}
+    st.guesses.push(r.value);
+    const j=def.judge(r.value,p);
+    if(j.s==="hit"){st.done=true;st.won=true;}else if(st.guesses.length>=MAX){st.done=true;st.won=false;}
+    fresh=st.guesses.length-1;save();render();
+    if(st.won)confetti([ctx.g.color,"#5fa463","#F2C14E","#ffffff","#141414"]);
+    if(st.done)setTimeout(showResult,st.won?1300:650);
+  }
+  function showResult(){
+    const grid=st.guesses.map(v=>EMO[def.judge(v,p).s]).join("");
+    const share=`${ctx.g.name} ${ctx.label} · Blockbuster Daily  ${st.won?st.guesses.length:"X"}/${MAX}\n${grid}`;
+    openModal(ctx.g,st.won?["Nailed it!","Solved in "+st.guesses.length+(st.guesses.length===1?" guess":" guesses")]:["So close","The answer was "+def.answer(p)],share,ctx.practice);
+  }
+  render();
+}
+
+/* ============ BOX OFFICE ============ */
+function boxOffice(board,ctx,idx){
+  const P=BLOCKBUSTERS[idx],R=5,blank={guesses:[],done:false,found:false,score:0};
+  let st=ctx.practice?{...blank}:store.get(ctx.key,{...blank});
+  if(!Array.isArray(st.guesses))st={...blank};
+  const save=()=>{if(!ctx.practice)store.set(ctx.key,st);};
+  const bb=MOVIES.find(m=>m.name===P.movie);
+  function judge(name,r){
+    const m=MOVIES.find(x=>x.name===name),base=100*(r+1);
+    if(name===P.movie)return{s:"bb",pts:base+BB_BONUS[r],note:"Blockbuster! Jackpot bonus"};
+    if(r>=4)return{s:"miss",pts:0,note:"Not the Blockbuster"};
+    const fail=P.rules.slice(0,r+1).find(rule=>!rule.test(m));
+    return fail?{s:"miss",pts:0,note:"Doesn't fit: "+fail.label}:{s:"hit",pts:base,note:"Fits all the criteria"};
+  }
+  let fresh=-1;
+  function render(err=""){
+    const r=st.done?R:st.guesses.length;
+    const crit=P.rules.map((rule,i)=>i<=r?`<li class="${i===r&&!st.done?"new":""}">${esc(rule.label)}</li>`:`<li class="locked">Unlocks in round ${i+1}</li>`).join("")
+      +(r>=4?`<li class="final${!st.done?" new":""}"><b>Final clue:</b> ${esc(P.final)}</li>`:`<li class="locked">Final clue unlocks in round 5</li>`);
+    const rows=[];
+    for(let i=0;i<R;i++){
+      const name=st.guesses[i];
+      if(name===undefined){rows.push(`<div class="row empty"><span class="i">R${i+1}</span><span></span><span></span></div>`);continue;}
+      const j=judge(name,i);
+      rows.push(`<div class="row ${j.s}"><span class="i">R${i+1}</span><span>${j.s==="bb"?"🎬 ":""}${esc(name)}<small>${esc(j.note)}</small></span><span class="n">${j.pts?"+"+j.pts.toLocaleString():"0"}</span></div>`);
+    }
+    const prompt=r<4?`Name any movie that fits <b>every</b> criterion so far. Worth <b>${100*(r+1)}</b> points, or <b>${(100*(r+1)+BB_BONUS[r]).toLocaleString()}</b> if it's the Blockbuster.`
+      :`Last round. Only the Blockbuster scores, worth <b>${(500+BB_BONUS[4]).toLocaleString()}</b> points.`;
+    board.innerHTML=`
+      <div class="bo-top"><span>${st.done?"Final":"Round "+(r+1)+" of "+R}</span><span>Score <b>${st.score.toLocaleString()}</b></span></div>
+      <ol class="cluelist">${crit}</ol>
+      ${st.done?"":`<p class="bo-prompt">${prompt}</p>`}
+      <div class="rows">${rows.join("")}</div>
+      ${st.done?`
+        <div class="answer"><div class="answer-k">${st.found?"You found the Blockbuster":"The Blockbuster was"}</div><div class="answer-v">${esc(bb.name)}</div>
+        <p>${bb.year} · directed by ${esc(bb.dir)} · about ${fmtGross(bb.g)} worldwide</p></div>
+        <div class="actions"><button class="btn" data-a="res">See results</button><button class="btn ghost" data-a="prac">Practice another</button></div>`:`
+        <form class="guess" autocomplete="off"><input id="gin" list="opts" placeholder="Start typing a movie…" aria-label="Your guess"><button class="btn" type="submit">Guess</button></form>
+        <datalist id="opts">${MOVIES.map(m=>`<option value="${esc(m.name)}">`).join("")}</datalist><div class="err">${esc(err)}</div>`}`;
+    fx(board,fresh,err);fresh=-1;
+    const f=board.querySelector("form");
+    if(f){f.addEventListener("submit",onGuess);if(st.guesses.length)board.querySelector("#gin").focus();}
+    board.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
+      if(b.dataset.a==="res")showResult();
+      else{let n;do{n=Math.floor(Math.random()*BLOCKBUSTERS.length);}while(n===idx);practice={id:"boxoffice",idx:n};renderGame(ctx.g);window.scrollTo(0,0);}
+    });
+  }
+  function onGuess(e){
+    e.preventDefault();
+    const raw=board.querySelector("#gin").value.trim();if(!raw)return;
+    const m=MOVIE_KEYS[norm(raw)];
+    if(!m){render("That movie isn't on the list. Pick one of the suggestions.");board.querySelector("#gin").value=raw;return;}
+    if(st.guesses.includes(m.name)){render("You already used that movie. Each round needs a new one.");return;}
+    const r=st.guesses.length,j=judge(m.name,r);
+    st.guesses.push(m.name);st.score+=j.pts;
+    if(j.s==="bb"){st.done=true;st.found=true;}else if(st.guesses.length>=R)st.done=true;
+    fresh=st.guesses.length-1;save();render();
+    if(j.s==="bb")confetti(["#F2C14E","#ffd970","#c9971c","#ffffff","#141414"],220);else if(j.s==="hit")confetti([ctx.g.color,"#5fa463","#ffffff"],40);
+    if(st.done)setTimeout(showResult,st.found?1400:650);
+  }
+  function showResult(){
+    const grid=st.guesses.map((n,i)=>({hit:"🟩",miss:"⬜",bb:"🎬"})[judge(n,i).s]).join("");
+    openModal(ctx.g,st.found?["Blockbuster!",`Found in round ${st.guesses.length} · ${st.score.toLocaleString()} points`]:["No Blockbuster today",`It was ${bb.name} · you scored ${st.score.toLocaleString()} points`],
+      `Blockbuster ${ctx.label} · Blockbuster Daily  ${st.score.toLocaleString()} pts\n${grid}`,ctx.practice);
+  }
+  render();
+}
+
+/* ============ MODAL ============ */
+const modal=document.getElementById("modal"),sheet=document.getElementById("sheet");
+let timer=null;
+function openModal(g,[title,sub],share,isP){
+  const s=gameStats(g.id);
+  sheet.innerHTML=`<button class="x" aria-label="Close">×</button>
+    <h3>${esc(title)}</h3><p class="sub">${esc(sub)}</p>
+    ${isP?`<p class="sub" style="margin-top:-8px">Practice rounds don't count toward your stats.</p>`:""}
+    <div class="stats"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.pct}</b><span>Win %</span></div><div><b>${s.cur}</b><span>Streak</span></div><div><b>${s.best}</b><span>Best</span></div></div>
+    <pre class="share" id="sharetxt">${esc(share)}</pre>
+    <button class="btn" style="width:100%" id="copy">Copy results</button>
+    <div class="next">Next puzzle in <b id="cd"></b> · <a href="#stats">All your stats</a></div>`;
+  modal.hidden=false;
+  sheet.querySelector(".x").onclick=closeModal;
+  sheet.querySelector("#copy").onclick=()=>{
+    const done=()=>toast("Copied to clipboard");
+    const fallback=()=>{const sel=window.getSelection(),rg=document.createRange();rg.selectNodeContents(sheet.querySelector("#sharetxt"));sel.removeAllRanges();sel.addRange(rg);try{document.execCommand("copy")?done():toast("Text selected, copy it manually");}catch(e){toast("Text selected, copy it manually");}};
+    try{navigator.clipboard.writeText(share).then(done,fallback);}catch(e){fallback();}
+  };
+  const tick=()=>{const n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1),d=Math.max(0,m-n);
+    const el=document.getElementById("cd");if(el)el.textContent=[d/36e5,d/6e4%60,d/1e3%60].map(x=>String(Math.floor(x)).padStart(2,"0")).join(":");};
+  tick();clearInterval(timer);timer=setInterval(tick,1000);
+}
+function closeModal(){modal.hidden=true;clearInterval(timer);}
+modal.addEventListener("click",e=>{if(e.target===modal)closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+
+/* ============ STATS ============ */
+// Stats are worked out from every finished daily puzzle saved in this browser.
+function allKeys(){
+  const ks=new Set(Object.keys(mem));
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("bbd:"))ks.add(k.slice(4));}}catch(e){}
+  return[...ks];
+}
+const isWin=(id,st)=>id==="boxoffice"?!!st.found:!!st.won;
+function records(id){
+  const re=new RegExp("^"+id+":(\\d+)$");
+  return allKeys().map(k=>k.match(re)).filter(Boolean)
+    .map(m=>({day:+m[1],st:store.get(m[0],null)}))
+    .filter(r=>r.st&&r.st.done&&Array.isArray(r.st.guesses)).sort((a,b)=>a.day-b.day);
+}
+function streaks(days,playedToday){
+  const set=new Set(days);let cur=0,d=playedToday?DAY:DAY-1;while(set.has(d)){cur++;d--;}
+  let best=0,run=0;[...set].sort((a,b)=>a-b).forEach((x,i,arr)=>{run=(i&&x===arr[i-1]+1)?run+1:1;best=Math.max(best,run);});
+  return{cur,best};
+}
+function gameStats(id){
+  const recs=records(id),max=id==="boxoffice"?5:(DEFS[id].max||6),wins=recs.filter(r=>isWin(id,r.st));
+  const dist=Array(max).fill(0);let losses=0;
+  recs.forEach(r=>isWin(id,r.st)?dist[Math.min(r.st.guesses.length,max)-1]++:losses++);
+  const s=streaks(wins.map(r=>r.day),recs.some(r=>r.day===DAY));
+  const out={id,played:recs.length,wins:wins.length,pct:recs.length?Math.round(wins.length/recs.length*100):0,cur:s.cur,best:s.best,dist,losses,max,
+    avg:wins.length?wins.reduce((t,r)=>t+r.st.guesses.length,0)/wins.length:null};
+  if(id==="boxoffice"&&recs.length){out.avgScore=Math.round(recs.reduce((t,r)=>t+(r.st.score||0),0)/recs.length);out.bestScore=Math.max(...recs.map(r=>r.st.score||0));}
+  return out;
+}
+const UNIT={era:"guesses",sold:"guesses",specs:"guesses",blurred:"rounds",boxoffice:"rounds"};
+function avgLine(g,s){
+  if(!s.played)return"";
+  if(g.id==="boxoffice")return`Average score <b>${s.avgScore.toLocaleString()}</b>, best <b>${s.bestScore.toLocaleString()}</b>. `+(s.avg?`You find the Blockbuster in round <b>${s.avg.toFixed(1)}</b> on average.`:`You haven't found a Blockbuster yet.`);
+  return s.avg?`You solve it in <b>${s.avg.toFixed(1)}</b> ${UNIT[g.id]} on average.`:`No solves yet. Keep at it.`;
+}
+function renderStats(){
+  const all=GAMES.map(g=>({g,s:gameStats(g.id)}));
+  const dayMap={};all.forEach(({g})=>records(g.id).forEach(r=>{(dayMap[r.day]=dayMap[r.day]||[]).push(isWin(g.id,r.st));}));
+  const days=Object.keys(dayMap).map(Number),ds=streaks(days,!!dayMap[DAY]);
+  const perfect=days.filter(d=>dayMap[d].length===GAMES.length&&dayMap[d].every(Boolean)).length;
+  const played=all.reduce((t,x)=>t+x.s.played,0),wins=all.reduce((t,x)=>t+x.s.wins,0);
+  const doneToday=dayMap[DAY]?dayMap[DAY].length:0;
+  const tile=(v,l)=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`;
+  // Best and toughest: win rate first, then fewer guesses (relative to the game's max).
+  const ranked=all.filter(x=>x.s.played).sort((a,b)=>b.s.pct-a.s.pct||((a.s.avg??a.s.max+1)/a.s.max)-((b.s.avg??b.s.max+1)/b.s.max));
+  const rankCard=(label,x)=>`<div class="rank" style="--c:${x.g.color}"><div class="gicon">${IC[x.g.id]}</div><div><div class="k">${label}</div><div class="v">${x.g.name}</div>
+    <div class="d">${x.s.pct}% win rate${x.s.avg?` · ${x.s.avg.toFixed(1)} ${UNIT[x.g.id]} avg`:""} · ${x.s.played} played</div></div></div>`;
+  const duo=ranked.length>=2?`<div class="duo">${rankCard("Your best game",ranked[0])}${rankCard("Your toughest game",ranked[ranked.length-1])}</div>`
+    :`<p class="empty-note" style="margin:-8px 0 24px">Finish at least two different games to see your best and toughest game.</p>`;
+  const gs=all.map(({g,s})=>{
+    const top=Math.max(...s.dist,s.losses,1),mostIdx=s.dist.indexOf(Math.max(...s.dist));
+    const bars=s.dist.map((n,i)=>`<div class="bar"><span>${i+1}</span><i class="${n?(i===mostIdx?"top":""):"z"}" style="width:${Math.max(8,n/top*100)}%">${n}</i></div>`).join("")
+      +`<div class="bar"><span>✕</span><i class="${s.losses?"lose":"z"}" style="width:${Math.max(8,s.losses/top*100)}%">${s.losses}</i></div>`;
+    return`<div class="gs" style="--c:${g.color}"><div>
+      <div class="gs-h"><div class="gicon">${IC[g.id]}</div><div><h3>${g.name}</h3><a href="#${g.id}">Play today's puzzle →</a></div></div>
+      <div class="mini"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.pct}</b><span>Win %</span></div><div><b>${s.cur}</b><span>Streak</span></div><div><b>${s.best}</b><span>Best streak</span></div></div>
+      <p class="avg">${s.played?avgLine(g,s):`You haven't finished a ${g.name} puzzle yet.`}</p></div>
+      <div><div class="dist-h">${g.id==="boxoffice"?"Round you found the Blockbuster":g.id==="blurred"?"Rounds to solve":"Guesses to solve"}</div><div class="dist">${bars}</div></div></div>`;
+  }).join("");
+  app.innerHTML=`<div class="stats-page">
+    <a href="#" class="back">← All games</a>
+    <h1>Your stats</h1>
+    <p class="lede">Every daily puzzle you finish counts. Practice rounds don't. Today: ${doneToday} of ${GAMES.length} games done.</p>
+    <div class="tiles">${tile(days.length,"Days played")}${tile(ds.cur,"Day streak")}${tile(ds.best,"Best day streak")}${tile(wins,"Puzzles solved")}${tile(played?Math.round(wins/played*100)+"%":"–","Overall win rate")}${tile(perfect,"Perfect days")}</div>
+    ${played?duo:""}
+    <h2 class="sec-h">By game</h2>
+    <div class="gstats">${gs}</div>
+    <p class="note">A day streak counts days you finish at least one game. A perfect day means you solved every game that day.</p></div>`;
+  app.querySelectorAll(".tile,.rank,.gs").forEach((el,i)=>el.style.setProperty("--n",i));
+  app.querySelectorAll(".dist").forEach(d=>d.querySelectorAll(".bar i").forEach((el,i)=>el.style.setProperty("--n",i)));
+  countUp(app);
+}
+
+/* ============ THEME ============ */
+const themeBtn=document.getElementById("themeBtn");
+const SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>';
+const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  themeBtn.innerHTML=t==="dark"?SUN:MOON;
+  themeBtn.setAttribute("aria-label",t==="dark"?"Switch to light mode":"Switch to dark mode");
+  themeBtn.title=t==="dark"?"Light mode":"Dark mode";
+}
+applyTheme(document.documentElement.dataset.theme==="dark"?"dark":"light");
+themeBtn.onclick=()=>{const t=document.documentElement.dataset.theme==="dark"?"light":"dark";applyTheme(t);store.set("theme",t);};
+
+route();
+</script>
+<script src="party-data.js"></script>
+<script src="party.js"></script>
+</body>
+</html>

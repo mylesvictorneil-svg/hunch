@@ -97,63 +97,93 @@ function makeGame(rand=Math.random,force){
 const critById=Object.fromEntries(CRIT.map(c=>[c.id,c]));
 window.HunchParty={PE,CRIT,makeGame,lookup:t=>PKEY[norm(t)]||null};
 
-/* ---------- connections ---------- */
-let peerLoad=null;
-function loadPeer(){
-  if(window.Peer)return Promise.resolve();
-  if(!peerLoad)peerLoad=new Promise((res,rej)=>{const s=document.createElement("script");s.src="vendor/peerjs.min.js";s.onload=res;s.onerror=()=>{peerLoad=null;rej(new Error("load"))};document.head.appendChild(s);});
-  return peerLoad;
+/* ---------- connections ----------
+   Players talk through a public MQTT relay over secure WebSockets, so it works on
+   almost any network (no direct phone-to-phone link needed). The host runs the game. */
+const BROKERS=["wss://broker.hivemq.com:8884/mqtt","wss://broker.emqx.io:8084/mqtt"];
+const TOPIC="bbdaily-jackpot/v1/";
+let mqttLoad=null;
+function loadMqtt(){
+  if(window.mqtt)return Promise.resolve();
+  if(!mqttLoad)mqttLoad=new Promise((res,rej)=>{const s=document.createElement("script");s.src="/vendor/mqtt.min.js";s.onload=res;s.onerror=()=>{mqttLoad=null;rej(new Error("load"));};document.head.appendChild(s);});
+  return mqttLoad;
 }
-const useLocal=()=>store.get("net",null)==="local";
+const testBroker=()=>store.get("broker",null);
+// Connect to the first relay that answers. Both host and guests try them in the same order.
+function connectRelay(will){
+  const list=testBroker()?[testBroker()]:BROKERS;
+  return loadMqtt().then(()=>new Promise((res,rej)=>{
+    let i=0;
+    const next=()=>{
+      if(i>=list.length)return rej(new Error("network"));
+      const url=list[i++];let done=false;
+      const c=mqtt.connect(url,{clientId:"bbd_"+Math.random().toString(36).slice(2,12),clean:true,connectTimeout:7000,reconnectPeriod:0,keepalive:30,will});
+      const fail=()=>{if(done)return;done=true;try{c.end(true);}catch(e){}next();};
+      c.once("connect",()=>{if(done)return;done=true;c.options.reconnectPeriod=2000;res(c);});
+      c.once("error",fail);
+      setTimeout(fail,8000);
+    };
+    next();
+  }));
+}
+const enc=o=>JSON.stringify(o),dec=b=>{try{return JSON.parse(b.toString());}catch(e){return null;}};
 // Host side
 function netHost(code,h){
-  if(useLocal()){
-    const ch=new BroadcastChannel(PREFIX+code);
-    ch.onmessage=e=>{const d=e.data;if(d.to==="host"){if(d.msg&&d.msg.t==="bye")h.leave(d.from);else h.msg(d.from,d.msg);}};
-    setTimeout(()=>h.ready(),30);
-    return{send:(pid,msg)=>ch.postMessage({to:pid,msg}),close:()=>ch.close()};
-  }
-  const conns={};let peer;
-  loadPeer().then(()=>{
-    peer=new Peer(PREFIX+code,{debug:0});
-    peer.on("open",()=>h.ready());
-    peer.on("error",err=>h.error(err.type));
-    peer.on("disconnected",()=>{try{peer.reconnect();}catch(e){}});
-    peer.on("connection",conn=>{
-      conn.on("data",d=>{if(d&&d.t==="join"&&d.pid){conns[d.pid]=conn;conn._pid=d.pid;}if(conn._pid)h.msg(conn._pid,d);});
-      conn.on("close",()=>{if(conn._pid&&conns[conn._pid]===conn){delete conns[conn._pid];h.leave(conn._pid);}});
-      conn.on("error",()=>{});
+  const base=TOPIC+code;let c=null,closed=false;
+  connectRelay({topic:base+"/meta",payload:"",retain:true,qos:1}).then(client=>{
+    if(closed){client.end(true);return;}
+    c=client;
+    // Make sure nobody else is already using this code (a live room keeps a retained marker).
+    let taken=false;
+    c.on("message",(topic,buf)=>{
+      if(topic===base+"/meta"){if(buf.length&&!c._claimed)taken=true;return;}
+      const d=dec(buf);if(!d)return;
+      if(d.t==="bye")h.leave(d.pid);else if(d.pid)h.msg(d.pid,d);
     });
-  }).catch(()=>h.error("load"));
-  return{send:(pid,msg)=>{const c=conns[pid];if(c&&c.open)try{c.send(msg);}catch(e){}},close:()=>{try{peer&&peer.destroy();}catch(e){}}};
+    c.subscribe([base+"/meta",base+"/host"],{qos:1},()=>{
+      setTimeout(()=>{
+        if(taken){h.error("code-taken");return;}
+        c._claimed=true;c.publish(base+"/meta","1",{retain:true,qos:1});h.ready();
+      },900);
+    });
+    c.on("close",()=>{if(!closed)h.error("network");});
+  }).catch(e=>h.error(e.message==="load"?"load":"network"));
+  return{
+    broadcast:msg=>{if(c)c.publish(base+"/all",enc(msg),{qos:1});},
+    send:(pid,msg)=>{if(c)c.publish(base+"/p/"+pid,enc(msg),{qos:1});},
+    close:()=>{closed=true;if(c){try{c.publish(base+"/meta","",{retain:true,qos:1},()=>c.end());}catch(e){}}}
+  };
 }
 // Guest side
 function netJoin(code,pid,h){
-  if(useLocal()){
-    const ch=new BroadcastChannel(PREFIX+code);let got=false;
-    ch.onmessage=e=>{const d=e.data;if(d.to===pid){got=true;h.msg(d.msg);}};
-    setTimeout(()=>h.ready(),30);
-    setTimeout(()=>{if(!got)h.error("peer-unavailable");},2500);
-    return{send:msg=>ch.postMessage({to:"host",from:pid,msg}),close:()=>{ch.postMessage({to:"host",from:pid,msg:{t:"bye"}});ch.close();}};
-  }
-  let peer,conn;
-  loadPeer().then(()=>{
-    peer=new Peer({debug:0});
-    peer.on("error",err=>h.error(err.type));
-    peer.on("open",()=>{
-      conn=peer.connect(PREFIX+code,{reliable:true});
-      conn.on("open",()=>h.ready());
-      conn.on("data",d=>h.msg(d));
-      conn.on("close",()=>h.closed());
-      conn.on("error",()=>h.closed());
+  const base=TOPIC+code;let c=null,closed=false,live=false,gotState=false;
+  connectRelay({topic:base+"/host",payload:enc({t:"bye",pid}),qos:1}).then(client=>{
+    if(closed){client.end(true);return;}
+    c=client;
+    c.on("message",(topic,buf)=>{
+      if(topic===base+"/meta"){
+        if(buf.length){if(!live){live=true;h.ready();}}
+        else if(live){live=false;h.closed();}
+        return;
+      }
+      const d=dec(buf);if(!d)return;
+      if(d.t==="state")gotState=true;
+      h.msg(d);
     });
-  }).catch(()=>h.error("load"));
-  return{send:msg=>{if(conn&&conn.open)try{conn.send(msg);}catch(e){}},close:()=>{try{conn&&conn.close();peer&&peer.destroy();}catch(e){}}};
+    c.subscribe([base+"/meta",base+"/all",base+"/p/"+pid],{qos:1});
+    setTimeout(()=>{if(!live&&!closed)h.error("peer-unavailable");},4000);
+    setTimeout(()=>{if(live&&!gotState&&!closed)h.error("no-answer");},9000);
+    c.on("close",()=>{if(!closed&&live)h.closed();});
+  }).catch(e=>h.error(e.message==="load"?"load":"network"));
+  return{
+    send:msg=>{if(c)c.publish(base+"/host",enc({...msg,pid}),{qos:1});},
+    close:()=>{closed=true;if(c){try{c.publish(base+"/host",enc({t:"bye",pid}),{qos:1},()=>c.end());}catch(e){}}}
+  };
 }
 
 /* ---------- session ---------- */
 let S=null; // {role, code, pid, name, net, st (public state), G (host only), note, status, deadline}
-const myPid=()=>{if(useLocal()){let t=sessionStorage.getItem("ppid");if(!t){t=Math.random().toString(36).slice(2,10);sessionStorage.setItem("ppid",t);}return t;}let p=store.get("partyPid",null);if(!p){p=Math.random().toString(36).slice(2,10);store.set("partyPid",p);}return p;};
+const myPid=()=>{if(testBroker()){let t=sessionStorage.getItem("ppid");if(!t){t=Math.random().toString(36).slice(2,10);sessionStorage.setItem("ppid",t);}return t;}let p=store.get("partyPid",null);if(!p){p=Math.random().toString(36).slice(2,10);store.set("partyPid",p);}return p;};
 const CODE_CH="ABCDEFGHJKMNPQRSTUVWXYZ";
 const newCode=()=>Array.from({length:4},()=>CODE_CH[Math.floor(Math.random()*CODE_CH.length)]).join("");
 
@@ -163,7 +193,7 @@ function hostCreate(name){
      G:{phase:"lobby",code,hostPid:pid,turnSec:30,players:[{pid,name,score:0,on:true,color:AV[0]}],log:[],used:[],round:0,game:null,order:[],turnIdx:0,deadline:0,jack:null,rounds:0}};
   S.net=netHost(code,{
     ready(){S.status="ok";publish();},
-    error(t){if(t==="unavailable-id"){S.net.close();hostCreate(name);return;}S.status="error";S.err=netErr(t);draw();},
+    error(t){if(t==="code-taken"){S.net.close();hostCreate(name);return;}if(S.status==="error")return;S.status="error";S.err=netErr(t);draw();},
     msg(from,m){hostHandle(from,m);},
     leave(from){const p=S.G.players.find(x=>x.pid===from);if(p){p.on=false;if(S.G.phase==="play"&&curPid()===from)advance("skip");publish();}}
   });
@@ -179,13 +209,14 @@ function guestJoin(code,name){
       else if(m.t==="note"){S.note=m.text;S.noteAt=Date.now();draw();}
       else if(m.t==="full"){S.status="error";S.err="That room is full (8 players max).";draw();}
     },
-    closed(){if(S&&S.role==="guest"&&S.status!=="left"){S.status="error";S.err="Lost connection to the host. They may have closed the game.";draw();}},
-    error(t){S.status="error";S.err=netErr(t);draw();}
+    closed(){if(S&&S.role==="guest"&&S.status!=="left"){S.status="error";S.errTitle="The game ended";S.err="The host closed the room or lost their connection.";draw();}},
+    error(t){if(S.status==="error"||S.status==="ok")return;S.status="error";S.err=netErr(t);draw();}
   });
   draw();
 }
 function netErr(t){
   return t==="peer-unavailable"?"Couldn't find that room. Check the code and make sure the host still has the game open."
+    :t==="no-answer"?"Found the room, but the host isn't responding. Ask them to keep the game open and try again."
     :t==="load"?"Couldn't load the multiplayer connection. Check your internet and try again."
     :t==="network"||t==="server-error"||t==="socket-error"||t==="socket-closed"?"Couldn't reach the multiplayer server. Check your connection and try again."
     :t==="browser-incompatible"?"This browser doesn't support live multiplayer. Try Chrome or Safari."
@@ -199,12 +230,12 @@ function publicState(){
   const G=S.G,g=G.game,shown=g?Math.min(G.round+1,g.crits.length):0;
   return{phase:G.phase,code:G.code,hostPid:G.hostPid,turnSec:G.turnSec,players:G.players.map(p=>({pid:p.pid,name:p.name,score:p.score,on:p.on,color:p.color})),
     round:G.round,rounds:G.rounds,critCount:g?g.crits.length:0,crits:g?g.crits.slice(0,shown).map(c=>c.label):[],final:g&&G.round>=g.crits.length?g.final:null,
-    turnPid:G.phase==="play"?curPid():null,remaining:G.phase==="play"?Math.max(0,G.deadline-Date.now()):0,log:G.log.slice(-40),jack:G.jack,
+    turnPid:G.phase==="play"?curPid():null,busy:G.busy?{who:G.busy.who,text:G.busy.text}:null,remaining:G.phase==="play"?Math.max(0,G.deadline-Date.now()):0,log:G.log.slice(-40),jack:G.jack,
     reveal:G.phase==="over"&&g?{name:g.jackpot,hint:g.final,crits:g.crits.map(c=>c.label)}:null};
 }
 function publish(prevLog,prevJack){
   const st=publicState();S.st=st;S.deadline=Date.now()+st.remaining;
-  S.G.players.forEach(p=>{if(p.pid!==S.pid&&p.on)S.net.send(p.pid,{t:"state",st});});
+  S.net.broadcast({t:"state",st});
   draw(prevLog,prevJack);
 }
 function hostHandle(from,m){
@@ -223,26 +254,58 @@ function hostHandle(from,m){
   if(G.phase!=="play"||curPid()!==from)return;
   const p=G.players.find(x=>x.pid===from),prevLog=G.log.length,prevJack=G.jack;
   if(m.t==="pass"){G.log.push({pid:from,who:p.name,ans:null,res:"pass",pts:0,round:G.round});advance();publish(prevLog,prevJack);return;}
-  if(m.t!=="answer")return;
-  const e=PKEY[norm(m.text||"")];
+  if(m.t!=="answer"||G.busy)return;
+  const text=String(m.text||"").trim().slice(0,60);if(!text)return;
   const tell=t=>{if(from===S.pid){S.note=t;S.noteAt=Date.now();draw();}else S.net.send(from,{t:"note",text:t});};
-  if(!e){tell(`“${String(m.text).slice(0,40)}” isn't on our list. Pick one of the suggestions.`);return;}
-  if(G.used.includes(e.name)){tell(`${e.name} was already used this game. Try another.`);return;}
   const g=G.game,active=g.crits.slice(0,Math.min(G.round+1,g.crits.length));
-  const fail=active.find(c=>!critById[c.id].test(e));
   const base=G.round<g.crits.length?100*(G.round+1):200;
-  let res,pts=0,note="";
-  if(e.name===g.jackpot&&!G.jack){res="jack";pts=base+BONUS[Math.min(G.round,BONUS.length-1)];G.jack={by:p.name,pid:from,name:e.name,round:G.round};G.used.push(e.name);
-    G.rounds=G.round+1;}
-  else if(fail){res="miss";note="Doesn't fit: "+fail.label;}
-  else{res="fit";pts=base;G.used.push(e.name);}
-  p.score+=pts;
-  G.log.push({pid:from,who:p.name,ans:e.name,res,pts,note,round:G.round});
-  if(from===S.pid)S.note="";
-  advance();publish(prevLog,prevJack);
+  const usedHas=n=>G.used.some(u=>norm(u)===norm(n));
+  const finish=(ans,res,note,ai)=>{
+    let pts=0;
+    if(res==="jack"){pts=base+BONUS[Math.min(G.round,BONUS.length-1)];G.jack={by:p.name,pid:from,name:g.jackpot,round:G.round};G.used.push(ans);G.rounds=G.round+1;}
+    else if(res==="fit"){pts=base;G.used.push(ans);}
+    p.score+=pts;
+    G.log.push({pid:from,who:p.name,ans,res,pts,note,round:G.round,ai:!!ai});
+    if(from===S.pid)S.note="";
+    advance();publish(prevLog,prevJack);
+  };
+  // 1) Answers on our built-in list are checked instantly against known facts.
+  const e=PKEY[norm(text)];
+  if(e){
+    if(usedHas(e.name)){tell(`${e.name} was already used this game. Try another.`);return;}
+    const fail=active.find(c=>!critById[c.id].test(e));
+    if(e.name===g.jackpot&&!G.jack)finish(e.name,"jack","");
+    else if(fail)finish(e.name,"miss","Doesn't fit: "+fail.label);
+    else finish(e.name,"fit","");
+    return;
+  }
+  // 2) Anything else goes to the AI referee.
+  G.busy={pid:from,who:p.name,text};publish();
+  judgeAI(text,active.map(c=>c.label),g.jackpot).then(r=>{
+    G.busy=null;
+    if(G.phase!=="play"||curPid()!==from){publish();return;}
+    if(!r){tell(`We couldn't check “${text}” right now. Try one of the suggestions instead.`);publish();return;}
+    if(!r.recognized){tell(`The referee couldn't identify “${text}”. Try something more specific.`);publish();return;}
+    const name=String(r.canonical||text).slice(0,60);
+    if(r.duplicate||usedHas(name)){tell(`${name} was already used this game. Try another.`);publish();return;}
+    if(r.is_jackpot&&!G.jack){finish(g.jackpot,"jack","",1);return;}
+    if(!r.fits){const c=active[(r.failed_clue|0)-1];finish(name,"miss",c?"Doesn't fit: "+c.label:(r.reason||"Doesn't fit every clue"),1);return;}
+    finish(name,"fit","",1);
+  });
+}
+async function judgeAI(answer,criteria,jackpot){
+  if(store.get("noAI",false))return null;
+  const J=PE.find(e=>e.name===jackpot);
+  try{
+    const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),12000);
+    const r=await fetch("/api/judge",{method:"POST",headers:{"content-type":"application/json"},signal:ctl.signal,
+      body:JSON.stringify({answer,criteria,jackpot,jackpotAliases:J&&J.al?J.al.split(";"):[],used:S.G.used.slice(-60)})});
+    clearTimeout(t);
+    if(!r.ok)return null;const j=await r.json();return j&&j.ok?j:null;
+  }catch(e){return null;}
 }
 function startGame(){
-  const G=S.G;G.game=makeGame();G.rounds=G.game.crits.length+1;G.round=0;G.log=[];G.used=[];G.jack=null;
+  const G=S.G;G.game=makeGame();G.rounds=G.game.crits.length+1;G.round=0;G.log=[];G.used=[];G.jack=null;G.busy=null;
   G.players=G.players.filter(p=>p.on);G.players.forEach(p=>p.score=0);G.phase="play";startRound();publish();
 }
 function startRound(){
@@ -262,7 +325,7 @@ function advance(kind){
   G.turnIdx++;beginTurn();
 }
 setInterval(()=>{
-  if(S&&S.role==="host"&&S.G.phase==="play"&&Date.now()>S.G.deadline){const pl=S.G.log.length,pj=S.G.jack;advance("timeout");publish(pl,pj);}
+  if(S&&S.role==="host"&&S.G.phase==="play"&&!S.G.busy&&Date.now()>S.G.deadline){const pl=S.G.log.length,pj=S.G.jack;advance("timeout");publish(pl,pj);}
   tickTimer();
 },250);
 function act(m){if(!S)return;if(S.role==="host")hostHandle(S.pid,m);else S.net.send(m);}
@@ -295,7 +358,7 @@ function body(){
   if(!S||S.status==="left"){
     const nm=esc(store.get("partyName","")),codeFromLink=(location.hash.match(/^#(?:party|jackpot)-([A-Za-z]{4})$/)||[])[1]||"";
     return`${back}${head}
-      <p class="how">Each round adds a new clue about a secret person, place or thing. On your turn, name anything that fits <b>every</b> clue so far. Later rounds are worth more. One answer is the <b>Jackpot</b>, the exact thing the clues describe. Name it for a huge bonus. Most points wins.</p>
+      <p class="how">Each round adds a new clue about a secret person, place or thing. On your turn, type anything that fits <b>every</b> clue so far. An AI referee checks your answer. Later rounds are worth more. One answer is the <b>Jackpot</b>, the exact thing the clues describe. Name it for a huge bonus. Most points wins.</p>
       <div class="pbox"><label class="plabel" for="pname">Your name</label><input id="pname" class="pfield" maxlength="16" placeholder="e.g. Myles" value="${nm}" autocomplete="off"></div>
       <div class="pchoice">
         <div class="pbox"><div class="plabel">Start a new game</div><p class="psub">You'll get a room code to send your friends.</p><button class="btn" id="pcreate" style="width:100%">Create a room</button></div>
@@ -304,7 +367,7 @@ function body(){
       </div>
       <div class="err" id="perr"></div>`;
   }
-  if(S.status==="error")return`${back}${head}<div class="answer"><div class="answer-k">Couldn't connect</div><p>${esc(S.err||"")}</p></div><div class="actions"><button class="btn" data-p="leave">Back</button></div>`;
+  if(S.status==="error")return`${back}${head}<div class="answer"><div class="answer-k">${esc(S.errTitle||"Couldn't connect")}</div><p>${esc(S.err||"")}</p></div><div class="actions"><button class="btn" data-p="leave">Back</button></div>`;
   if(S.status==="connecting"||!S.st)return`${back}${head}<div class="pwait"><span class="spin"></span>${S.role==="host"?"Creating your room…":"Joining room "+esc(S.code)+"…"}</div>`;
   const st=S.st,me=st.players.find(p=>p.pid===S.pid),isHost=S.role==="host";
   const link=location.origin+location.pathname+"#jackpot-"+st.code;
@@ -322,7 +385,7 @@ function body(){
   const feed=st.log.length?`<div class="plabel" style="margin-top:22px">Answers</div><div class="rows pfeed">${[...st.log].reverse().map(l=>{
       const cls=l.res==="jack"?"bb":l.res==="fit"?"hit":l.res==="miss"?"miss":"empty skipped";
       const what=l.res==="pass"?"passed":l.res==="timeout"?"ran out of time":l.res==="skip"?"left the game":esc(l.ans);
-      const sub=l.res==="jack"?"Jackpot!":l.res==="fit"?"Fits every clue":l.res==="miss"?esc(l.note):"";
+      const sub=(l.res==="jack"?"Jackpot!":l.res==="fit"?"Fits every clue":l.res==="miss"?esc(l.note):"")+(l.ai&&l.res!=="jack"?" · checked by AI":"");
       return`<div class="row ${cls}"><span class="i">R${l.round+1}</span><span>${l.res==="jack"?"🎯 ":""}${esc(l.who)}: ${what}${sub?`<small>${sub}</small>`:""}</span><span class="n">${l.pts?"+"+l.pts.toLocaleString():""}</span></div>`;}).join("")}</div>`:"";
   if(st.phase==="over"){
     const ranked=[...st.players].sort((a,b)=>b.score-a.score),top=ranked[0],tie=ranked.filter(p=>p.score===top.score).length>1;
@@ -341,12 +404,12 @@ function body(){
     +(!g.final&&g.rounds>g.critCount?`<li class="locked">Final clue unlocks in the last round</li>`:"");
   const roundPts=g.round<g.critCount?100*(g.round+1):200,bonus=BONUS[Math.min(g.round,BONUS.length-1)];
   const turn=mine?`<div class="pturn me"><div class="pt-h"><b>Your turn!</b><div class="ptimer"><i></i><span></span></div></div>
-      <form class="guess" id="pansf" autocomplete="off"><input id="pin" list="popts" placeholder="Name a person, place or thing…" aria-label="Your answer"><button class="btn" type="submit">Answer</button></form>
+      <form class="guess" id="pansf" autocomplete="off"><input id="pin" list="popts" placeholder="Type any person, place or thing…" aria-label="Your answer"><button class="btn" type="submit">Answer</button></form>
       <datalist id="popts">${NAMES.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
-      <div class="prow"><span class="err">${esc(S.note||"")}</span><button class="link" data-p="pass">Pass</button></div>
+      <div class="prow">${g.busy?`<span class="pcheck"><span class="spin"></span>The referee is checking “${esc(g.busy.text)}”…</span>`:`<span class="err">${esc(S.note||"")}</span>`}<button class="link" data-p="pass">Pass</button></div>
       <p class="psub">A fit is worth <b>${roundPts}</b>. The Jackpot is worth <b>${(roundPts+bonus).toLocaleString()}</b>${g.jack?" (already found)":""}.</p></div>`
     :`<div class="pturn"><div class="pt-h">${turnP?av(turnP):""}<b>${esc(turnP?turnP.name:"…")} is answering</b><div class="ptimer"><i></i><span></span></div></div>
-      ${me?`<p class="psub">You're up soon. Think of something that fits every clue.</p>`:""}</div>`;
+      ${g.busy?`<p class="pcheck"><span class="spin"></span>The referee is checking “${esc(g.busy.text)}”…</p>`:me?`<p class="psub">You're up soon. Think of something that fits every clue.</p>`:""}</div>`;
   return`<div class="ptop">${back}<span class="plabel" style="margin:0">Room ${esc(st.code)}</span></div>
     <div class="bo-top"><span>${g.final?"Final round":g.jack?"Last round":"Round "+(g.round+1)+" of "+g.rounds}</span>${g.jack?`<span class="pjack">🎯 ${esc(g.jack.by)} found the Jackpot. Finish this round!</span>`:""}</div>
     ${board}<ol class="cluelist pclues" style="--c:#F08BB6">${crits}</ol>${turn}${feed}
