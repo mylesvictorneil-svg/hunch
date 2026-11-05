@@ -289,7 +289,7 @@ const SPECS = [
    fact:"At full speed it would empty its fuel tank in about 12 minutes."}
 ];
 
-// Movie database shared by Blurred and Box Office.
+// Movie database shared by Blurred and Blockbuster.
 // [title, year, approx worldwide gross ($M, incl. re-releases), director, genres, stars, flags: s = sequel, b = won Best Picture]
 const MOVIES = [
   ["Avatar",2009,2923,"James Cameron","sci-fi action adventure","Sam Worthington|Zoe Saldaña",""],
@@ -418,7 +418,7 @@ const BLURRED = [
   {movie:"Shrek", hints:["An early-2000s animated comedy","Won the first-ever Oscar for Best Animated Feature","Pokes fun at classic fairy tales","Features a talking donkey voiced by Eddie Murphy","A grumpy green ogre sets out to rescue Princess Fiona"]}
 ];
 
-// Box Office: each round adds a criterion. Rounds 1–4 are checked against MOVIES;
+// Blockbuster: each round adds a criterion. Rounds 1–4 are checked against MOVIES;
 // round 5 is a final clue only the Blockbuster fits.
 const RULE = {
   genre:g=>({label:`It's ${/^[aeiou]/.test(g)?"an":"a"} ${g} movie`,test:m=>m.genres.includes(g)}),
@@ -493,7 +493,7 @@ const GAMES=[
   {id:"sold",name:"Sold",tag:"Price is right",color:"#86C98A",blurb:"A real auction lot. Guess what it sold for, with color-coded higher or lower hints.",off:3},
   {id:"specs",name:"Spec Sheet",tag:"Guess the car",color:"#F27A62",blurb:"Specs are revealed one at a time. Name the car.",off:5},
   {id:"blurred",name:"Blurred",tag:"Guess the movie",color:"#AE96DE",blurb:"Five rounds, five hints, from vague to obvious. Name the movie.",off:2},
-  {id:"boxoffice",name:"Box Office",tag:"Find the Blockbuster",color:"#6AA8EC",blurb:"Name a movie that fits the clues as they get more specific. Land the Blockbuster for big points.",off:4}
+  {id:"boxoffice",name:"Blockbuster",tag:"Narrow it down",color:"#6AA8EC",blurb:"Name a movie that fits the clues as they get more specific. Land the Blockbuster for big points.",off:4}
 ];
 
 /* ============ GAME DEFINITIONS ============ */
@@ -703,7 +703,7 @@ function boxOffice(board,ctx,idx){
   function showResult(){
     const grid=st.guesses.map((n,i)=>({hit:"🟩",miss:"⬜",bb:"🎬"})[judge(n,i).s]).join("");
     openModal(ctx.g,st.found?["Blockbuster!",`Found in round ${st.guesses.length} · ${st.score.toLocaleString()} points`]:["No Blockbuster today",`It was ${bb.name} · you scored ${st.score.toLocaleString()} points`],
-      `Hunch Box Office ${ctx.label}  ${st.score.toLocaleString()} pts\n${grid}`,ctx.practice);
+      `Hunch Blockbuster ${ctx.label}  ${st.score.toLocaleString()} pts\n${grid}`,ctx.practice);
   }
   render();
 }
