@@ -3,26 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light only">
 <title>Hunch — Daily Guessing Games</title>
+<script>
+  // Apply the saved theme (or the device setting) before anything draws, so there's no flash.
+  (function(){var t=null;try{t=localStorage.getItem("hunch:theme");}catch(e){}
+    if(t)t=JSON.parse(t);if(t!=="dark"&&t!=="light")t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";
+    document.documentElement.dataset.theme=t;})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#141414; --muted:#6c6a66; --line:#e4e1da; --bg:#faf8f3; --card:#fff;
-    --green:#5fa463; --yellow:#d1b448; --gray:#a3a19c; --red:#d9604c;
+    --ink:#141414; --on-ink:#fff; --muted:#6c6a66; --text2:#3c3a36; --line:#e4e1da; --bg:#faf8f3; --card:#fff;
+    --soft:#f1eee6; --field:#fff; --field-line:#cfcbc2; --placeholder:#9a978f; --empty:#c2bfb7; --locked:#e8e5dd;
+    --overlay:rgba(20,20,20,.45); --shadow:rgba(0,0,0,.08);
+    --green:#5fa463; --yellow:#d1b448; --gray:#a3a19c; --red:#d9604c; --gold:#F2C14E;
     --serif:"Fraunces", Georgia, serif; --sans:"DM Sans", system-ui, -apple-system, sans-serif;
+    color-scheme:light;
+  }
+  [data-theme="dark"]{
+    --ink:#f1eee7; --on-ink:#141414; --muted:#a29e95; --text2:#d3cfc6; --line:#33312d; --bg:#141312; --card:#1e1d1b;
+    --soft:#262422; --field:#1a1917; --field-line:#4a4741; --placeholder:#77736b; --empty:#4f4c46; --locked:#3a3834;
+    --overlay:rgba(0,0,0,.62); --shadow:rgba(0,0,0,.4);
+    --gray:#6b6965;
+    color-scheme:dark;
   }
   *{box-sizing:border-box}
-  html{color-scheme:light}
   html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  body{transition:background .2s,color .2s}
   a{color:inherit}
-  button{font-family:inherit;cursor:pointer}
-  .top{display:flex;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  .top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 22px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:5}
   .logo{font-family:var(--serif);font-weight:800;font-size:24px;text-decoration:none;letter-spacing:-.5px}
   .logo span{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--red);margin-left:2px;vertical-align:2px}
-  .date{font-size:13px;color:var(--muted);font-weight:500}
+  .top-r{display:flex;align-items:center;gap:8px}
+  .date{font-size:13px;color:var(--muted);font-weight:500;margin-right:6px}
+  .tbtn{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line);background:transparent;font-weight:700;font-size:13px;text-decoration:none;transition:border-color .15s}
+  .tbtn:hover,.tbtn.on{border-color:var(--ink)}
+  .tbtn svg{width:17px;height:17px}
+  .tbtn.icon{width:36px;padding:0;justify-content:center}
   main{max-width:1040px;margin:0 auto;padding:0 20px 60px}
 
   /* hub */
@@ -31,15 +51,15 @@
   .hero p{color:var(--muted);font-size:17px;margin:14px 0 0}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;text-decoration:none;transition:transform .15s, box-shadow .15s}
-  .card:hover{transform:translateY(-3px);box-shadow:0 10px 26px rgba(0,0,0,.08)}
+  .card:hover{transform:translateY(-3px);box-shadow:0 10px 26px var(--shadow)}
   .card .band{background:var(--c);height:118px;display:flex;align-items:center;justify-content:center}
   .card .band svg{width:58px;height:58px}
   .card .body{padding:18px 20px 20px;display:flex;flex-direction:column;flex:1}
   .card h2{font-family:var(--serif);font-weight:800;font-size:26px;margin:0;letter-spacing:-.5px}
   .card .tag{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-top:3px}
-  .card p{margin:10px 0 18px;color:#3c3a36;line-height:1.45;font-size:15px;flex:1}
+  .card p{margin:10px 0 18px;color:var(--text2);line-height:1.45;font-size:15px;flex:1}
   .card .foot{display:flex;align-items:center;justify-content:space-between}
-  .pill{display:inline-block;padding:9px 20px;border-radius:999px;background:var(--ink);color:#fff;font-weight:700;font-size:14px}
+  .pill{display:inline-block;padding:9px 20px;border-radius:999px;background:var(--ink);color:var(--on-ink);font-weight:700;font-size:14px}
   .pill.done{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
   .num{font-size:13px;color:var(--muted)}
   .note{text-align:center;color:var(--muted);font-size:13px;margin-top:34px}
@@ -53,19 +73,19 @@
   .gicon svg{width:32px;height:32px}
   .ghead h1{font-family:var(--serif);font-weight:800;font-size:32px;margin:0;letter-spacing:-.6px;line-height:1.05}
   .gsub{font-size:13px;color:var(--muted);font-weight:500;margin-top:2px}
-  .how{font-size:14px;color:#4a4843;line-height:1.5;margin:8px 0 20px;padding:10px 14px;background:#f1eee6;border-radius:10px}
+  .how{font-size:14px;color:var(--text2);line-height:1.5;margin:8px 0 20px;padding:10px 14px;background:var(--soft);border-radius:10px}
 
   .cluelist{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px;counter-reset:c}
   .cluelist li{counter-increment:c;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 14px 12px 46px;position:relative;line-height:1.4;font-size:15px}
-  .cluelist li::before{content:counter(c);position:absolute;left:14px;top:11px;width:22px;height:22px;border-radius:50%;background:var(--c);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .cluelist li::before{content:counter(c);position:absolute;left:14px;top:11px;width:22px;height:22px;border-radius:50%;background:var(--c);color:#141414;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
   .cluelist li.locked{color:var(--muted);background:transparent;border-style:dashed;font-size:13px}
-  .cluelist li.locked::before{background:#e8e5dd}
+  .cluelist li.locked::before{background:var(--locked);color:var(--muted)}
 
   .lot{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;gap:16px;margin-bottom:18px}
-  .lot-emoji{font-size:44px;line-height:1;width:72px;height:72px;flex:none;border-radius:12px;background:color-mix(in srgb,var(--c) 35%,white);display:flex;align-items:center;justify-content:center}
+  .lot-emoji{font-size:44px;line-height:1;width:72px;height:72px;flex:none;border-radius:12px;background:color-mix(in srgb,var(--c) 35%,var(--card));display:flex;align-items:center;justify-content:center}
   .lot-title{font-family:var(--serif);font-weight:800;font-size:20px;line-height:1.15}
   .lot-meta{font-size:13px;color:var(--muted);margin-top:4px;font-weight:500}
-  .lot p{margin:8px 0 0;font-size:14.5px;line-height:1.45;color:#3c3a36}
+  .lot p{margin:8px 0 0;font-size:14.5px;line-height:1.45;color:var(--text2)}
 
   .specs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
   .spec{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-height:68px}
@@ -74,66 +94,84 @@
   .spec.locked{background:transparent;border-style:dashed}
   .spec.locked .v{color:var(--muted);font-size:13px;font-weight:400}
 
-  .plot{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 18px 14px;margin-bottom:12px;font-size:17px;line-height:1.75;font-family:var(--serif);font-weight:600}
-  .plot .bw{filter:blur(5px);color:#555;user-select:none}
-  .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
-
   .rows{display:grid;gap:6px;margin-bottom:16px}
   .row{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;min-height:46px;border-radius:9px;padding:0 14px;font-weight:700;font-size:15px}
   .row .i{font-size:12px;opacity:.7}
   .row .n{font-size:13px;font-weight:500}
-  .row.empty{border:1.5px solid var(--line);background:transparent;color:#c2bfb7}
+  .row.empty{border:1.5px solid var(--line);background:transparent;color:var(--empty)}
   .row.hit{background:var(--green);color:#fff}
   .row.close{background:var(--yellow);color:#fff}
   .row.miss{background:var(--gray);color:#fff}
   .row.far{background:var(--red);color:#fff}
+  .row small{display:block;font-size:12px;font-weight:500;opacity:.92;margin-top:1px}
+  .row:has(small){padding-top:7px;padding-bottom:7px}
+  .row.hit .n,.row.bb .n{font-weight:700;font-size:14px}
+  .row.bb{background:var(--gold);color:#141414}
 
   form.guess{display:flex;gap:8px}
-  form.guess input{flex:1;min-width:0;font:inherit;font-size:17px;color:#141414;-webkit-text-fill-color:#141414;caret-color:#141414;opacity:1;padding:13px 15px;border:1.5px solid #cfcbc2;border-radius:10px;background:#fff;outline:none}
+  form.guess input{flex:1;min-width:0;font:inherit;font-size:17px;color:var(--ink);-webkit-text-fill-color:var(--ink);caret-color:var(--ink);opacity:1;padding:13px 15px;border:1.5px solid var(--field-line);border-radius:10px;background:var(--field);outline:none}
   form.guess input:focus{border-color:var(--ink)}
-  form.guess input::placeholder{color:#9a978f;-webkit-text-fill-color:#9a978f}
-  .btn{border:0;background:var(--ink);color:#fff;font-weight:700;font-size:15px;padding:0 22px;border-radius:10px;min-height:48px}
+  form.guess input::placeholder{color:var(--placeholder);-webkit-text-fill-color:var(--placeholder)}
+  .btn{border:0;background:var(--ink);color:var(--on-ink);font-weight:700;font-size:15px;padding:0 22px;border-radius:10px;min-height:48px}
   .btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
   .err{color:var(--red);font-size:13px;min-height:18px;margin-top:6px;font-weight:500}
 
   .answer{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center;margin-bottom:12px}
   .answer-k{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700;color:var(--muted)}
   .answer-v{font-family:var(--serif);font-weight:800;font-size:28px;margin-top:4px;letter-spacing:-.4px}
-  .answer p{margin:8px 0 0;font-size:14px;color:#4a4843;line-height:1.45}
+  .answer p{margin:8px 0 0;font-size:14px;color:var(--text2);line-height:1.45}
   .actions{display:flex;gap:8px}
   .actions .btn{flex:1}
 
-  /* box office */
-  .row small{display:block;font-size:12px;font-weight:500;opacity:.92;margin-top:1px}
-  .row:has(small){padding-top:7px;padding-bottom:7px}
-  .row.hit .n,.row.bb .n{font-weight:700;font-size:14px}
-  .row.bb{background:#F2C14E;color:#141414}
+  /* blockbuster */
   .bo-top{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;margin-bottom:10px;font-size:15px}
   .bo-top b{font-family:var(--serif);font-size:22px;margin-left:4px}
   .cluelist li.new{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
-  .cluelist li.final{background:#141414;color:#fff;border-color:#141414}
-  .cluelist li.final::before{background:#F2C14E;color:#141414}
-  .bo-prompt{font-size:14px;line-height:1.5;margin:0 0 14px;color:#3c3a36}
-  .bo-progress{display:flex;gap:5px;margin-bottom:16px}
-  .bo-progress i{flex:1;height:7px;border-radius:4px;background:#e6e2d9}
-  .bo-progress i.hit{background:var(--green)} .bo-progress i.miss{background:var(--red)} .bo-progress i.now{background:var(--ink)}
-  .bo-q{text-align:center;font-weight:700;margin-bottom:12px;font-size:15px}
-  .bo-pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;position:relative}
-  .bo-film{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:22px 14px;text-align:center;min-height:170px;display:flex;flex-direction:column;justify-content:center;align-items:center;transition:border-color .15s, transform .1s;font:inherit;color:inherit}
-  button.bo-film:hover{border-color:var(--ink)}
-  button.bo-film:active{transform:scale(.98)}
-  .bo-film .t{font-family:var(--serif);font-weight:800;font-size:21px;line-height:1.15;letter-spacing:-.3px}
-  .bo-film .y{color:var(--muted);font-size:13px;margin-top:6px;font-weight:500}
-  .bo-film .g{font-size:22px;font-weight:700;margin-top:12px}
-  .bo-film.win{border-color:var(--green);background:#eef6ee}
-  .bo-film.picked.wrong{border-color:var(--red);background:#fbeeeb}
-  .bo-vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--ink);color:#fff;font-weight:800;font-size:12px;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .bo-verdict{text-align:center;font-weight:700;margin-bottom:12px;min-height:22px}
+  .cluelist li.final{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .cluelist li.final::before{background:var(--gold);color:#141414}
+  .bo-prompt{font-size:14px;line-height:1.5;margin:0 0 14px;color:var(--text2)}
+
+  /* stats page */
+  .stats-page{max-width:820px;margin:0 auto;padding-top:22px}
+  .stats-page h1{font-family:var(--serif);font-weight:800;font-size:clamp(34px,6vw,48px);letter-spacing:-1px;margin:16px 0 4px}
+  .stats-page .lede{color:var(--muted);margin:0 0 24px;font-size:15px}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:22px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 12px;text-align:center}
+  .tile b{display:block;font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.1}
+  .tile span{font-size:12px;color:var(--muted);font-weight:500}
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:28px}
+  .rank{border-radius:14px;padding:16px 18px;display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line)}
+  .rank .gicon{width:46px;height:46px}
+  .rank .gicon svg{width:26px;height:26px}
+  .rank .k{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .rank .v{font-family:var(--serif);font-weight:800;font-size:22px;line-height:1.15}
+  .rank .d{font-size:13px;color:var(--text2);margin-top:2px}
+  .sec-h{font-family:var(--serif);font-weight:800;font-size:22px;margin:0 0 12px;letter-spacing:-.3px}
+  .gstats{display:grid;gap:12px}
+  .gs{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:20px;align-items:start}
+  .gs-h{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .gs-h .gicon{width:40px;height:40px;border-radius:10px}
+  .gs-h .gicon svg{width:23px;height:23px}
+  .gs-h h3{font-family:var(--serif);font-weight:800;font-size:21px;margin:0;line-height:1.1}
+  .gs-h a{font-size:12px;color:var(--muted);font-weight:500}
+  .mini{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;gap:4px}
+  .mini b{display:block;font-family:var(--serif);font-weight:800;font-size:22px}
+  .mini span{font-size:11px;color:var(--muted);font-weight:500}
+  .avg{margin-top:12px;font-size:13.5px;color:var(--text2);line-height:1.45}
+  .avg b{color:var(--ink)}
+  .dist-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:8px}
+  .dist{display:grid;gap:5px}
+  .bar{display:grid;grid-template-columns:22px 1fr;align-items:center;gap:8px;font-size:12px;font-weight:700}
+  .bar i{display:flex;align-items:center;justify-content:flex-end;height:22px;border-radius:5px;background:var(--gray);min-width:24px;color:#fff;font-style:normal;padding:0 7px;font-size:12px;line-height:1}
+  .bar i.top{background:var(--green)}
+  .bar i.lose{background:var(--red)}
+  .bar i.z{background:var(--locked);color:var(--muted)}
+  .empty-note{color:var(--muted);font-size:13.5px;padding:8px 0}
 
   /* modal */
-  .modal{position:fixed;inset:0;background:rgba(20,20,20,.45);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20}
+  .modal{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center;padding:18px;z-index:20}
   .modal[hidden]{display:none}
-  .sheet{background:#fff;border-radius:16px;max-width:420px;width:100%;padding:26px 24px 22px;position:relative;max-height:92vh;overflow:auto;animation:pop .2s ease-out}
+  .sheet{background:var(--card);border-radius:16px;max-width:420px;width:100%;padding:26px 24px 22px;position:relative;max-height:92vh;overflow:auto;animation:pop .2s ease-out}
   @keyframes pop{from{transform:translateY(12px);opacity:0}}
   .x{position:absolute;right:12px;top:10px;border:0;background:none;font-size:26px;line-height:1;color:var(--muted)}
   .sheet h3{font-family:var(--serif);font-weight:800;font-size:30px;margin:0;text-align:center;letter-spacing:-.5px}
@@ -141,24 +179,32 @@
   .stats{display:grid;grid-template-columns:repeat(4,1fr);text-align:center;margin-bottom:18px}
   .stats b{display:block;font-size:26px;font-family:var(--serif);font-weight:800}
   .stats span{font-size:11px;color:var(--muted);font-weight:500}
-  .share{background:#f4f2ec;border-radius:10px;padding:12px 14px;font-size:15px;white-space:pre-wrap;margin:0 0 10px;font-family:var(--sans);line-height:1.5}
+  .share{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:15px;white-space:pre-wrap;margin:0 0 10px;font-family:var(--sans);line-height:1.5}
   .next{text-align:center;color:var(--muted);font-size:13px;margin-top:14px}
   .next b{color:var(--ink);font-variant-numeric:tabular-nums}
-  .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:9px 16px;border-radius:8px;font-size:14px;font-weight:500;z-index:30}
+  .next a{color:var(--ink);font-weight:700}
+  .toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--on-ink);padding:9px 16px;border-radius:8px;font-size:14px;font-weight:500;z-index:30}
 
+  @media (max-width:640px){
+    .date{display:none}
+    .gs{grid-template-columns:1fr}
+    .duo{grid-template-columns:1fr}
+  }
   @media (max-width:480px){
-    .specs,.meta{grid-template-columns:1fr 1fr}
-    .meta .spec:last-child{grid-column:span 2}
+    .top{padding:10px 14px}
+    .specs{grid-template-columns:1fr 1fr}
     .lot{flex-direction:column}
-    .bo-film{min-height:150px;padding:18px 10px}
-    .bo-film .t{font-size:18px}
   }
 </style>
 </head>
 <body>
 <header class="top">
   <a href="#" class="logo">Hunch<span></span></a>
-  <span class="date" id="today"></span>
+  <div class="top-r">
+    <span class="date" id="today"></span>
+    <a href="#stats" class="tbtn" id="statsBtn" aria-label="Your stats"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V11M12 20V4M19 20v-6"/></svg>Stats</a>
+    <button class="tbtn icon" id="themeBtn" aria-label="Switch light or dark mode"></button>
+  </div>
 </header>
 <main id="app"></main>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
@@ -572,13 +618,15 @@ function renderHub(){
 }
 function route(){
   closeModal();
-  const g=GAMES.find(x=>x.id===location.hash.slice(1));
-  if(!g){practice=null;renderHub();}else{if(practice&&practice.id!==g.id)practice=null;renderGame(g);}
+  const h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);
+  document.getElementById("statsBtn").classList.toggle("on",h==="stats");
+  if(h==="stats"){practice=null;renderStats();}
+  else if(!g){practice=null;renderHub();}else{if(practice&&practice.id!==g.id)practice=null;renderGame(g);}
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",route);
 // Keep every open tab in sync: redraw when another tab saves progress, or when this tab comes back into view.
-function refresh(){if(!modal.hidden)return;const y=window.scrollY;const g=GAMES.find(x=>x.id===location.hash.slice(1));if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
+function refresh(){const t=store.get("theme",null);if(t==="dark"||t==="light")applyTheme(t);if(!modal.hidden)return;const y=window.scrollY,h=location.hash.slice(1),g=GAMES.find(x=>x.id===h);if(h==="stats")renderStats();else if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
 window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("hunch:"))refresh();});
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
 
@@ -633,7 +681,7 @@ function guessGame(board,def,p,ctx,idx){
     const j=def.judge(r.value,p);
     if(j.s==="hit"){st.done=true;st.won=true;}else if(st.guesses.length>=MAX){st.done=true;st.won=false;}
     save();render();
-    if(st.done){if(!ctx.practice)bumpStats(ctx.g.id,st.won);setTimeout(showResult,650);}
+    if(st.done)setTimeout(showResult,650);
   }
   function showResult(){
     const grid=st.guesses.map(v=>EMO[def.judge(v,p).s]).join("");
@@ -698,7 +746,7 @@ function boxOffice(board,ctx,idx){
     st.guesses.push(m.name);st.score+=j.pts;
     if(j.s==="bb"){st.done=true;st.found=true;}else if(st.guesses.length>=R)st.done=true;
     save();render();
-    if(st.done){if(!ctx.practice)bumpStats("boxoffice",st.found);setTimeout(showResult,650);}
+    if(st.done)setTimeout(showResult,650);
   }
   function showResult(){
     const grid=st.guesses.map((n,i)=>({hit:"🟩",miss:"⬜",bb:"🎬"})[judge(n,i).s]).join("");
@@ -708,26 +756,18 @@ function boxOffice(board,ctx,idx){
   render();
 }
 
-/* ============ STATS / MODAL ============ */
-function bumpStats(id,won){
-  const s=store.get("stats:"+id,{played:0,wins:0,streak:0,best:0,last:null,lastWon:false});
-  if(s.last===DAY)return;
-  s.played++;if(won)s.wins++;
-  s.streak=won?((s.last===DAY-1&&s.lastWon)?s.streak+1:1):0;
-  s.best=Math.max(s.best,s.streak);s.last=DAY;s.lastWon=won;
-  store.set("stats:"+id,s);
-}
+/* ============ MODAL ============ */
 const modal=document.getElementById("modal"),sheet=document.getElementById("sheet");
 let timer=null;
 function openModal(g,[title,sub],share,isP){
-  const s=store.get("stats:"+g.id,{played:0,wins:0,streak:0,best:0});
+  const s=gameStats(g.id);
   sheet.innerHTML=`<button class="x" aria-label="Close">×</button>
     <h3>${esc(title)}</h3><p class="sub">${esc(sub)}</p>
     ${isP?`<p class="sub" style="margin-top:-8px">Practice rounds don't count toward your stats.</p>`:""}
-    <div class="stats"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.played?Math.round(s.wins/s.played*100):0}</b><span>Win %</span></div><div><b>${s.streak}</b><span>Streak</span></div><div><b>${s.best}</b><span>Best</span></div></div>
+    <div class="stats"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.pct}</b><span>Win %</span></div><div><b>${s.cur}</b><span>Streak</span></div><div><b>${s.best}</b><span>Best</span></div></div>
     <pre class="share" id="sharetxt">${esc(share)}</pre>
     <button class="btn" style="width:100%" id="copy">Copy results</button>
-    <div class="next">Next puzzle in <b id="cd"></b></div>`;
+    <div class="next">Next puzzle in <b id="cd"></b> · <a href="#stats">All your stats</a></div>`;
   modal.hidden=false;
   sheet.querySelector(".x").onclick=closeModal;
   sheet.querySelector("#copy").onclick=()=>{
@@ -742,6 +782,89 @@ function openModal(g,[title,sub],share,isP){
 function closeModal(){modal.hidden=true;clearInterval(timer);}
 modal.addEventListener("click",e=>{if(e.target===modal)closeModal();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+
+/* ============ STATS ============ */
+// Stats are worked out from every finished daily puzzle saved in this browser.
+function allKeys(){
+  const ks=new Set(Object.keys(mem));
+  try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.startsWith("hunch:"))ks.add(k.slice(6));}}catch(e){}
+  return[...ks];
+}
+const isWin=(id,st)=>id==="boxoffice"?!!st.found:!!st.won;
+function records(id){
+  const re=new RegExp("^"+id+":(\\d+)$");
+  return allKeys().map(k=>k.match(re)).filter(Boolean)
+    .map(m=>({day:+m[1],st:store.get(m[0],null)}))
+    .filter(r=>r.st&&r.st.done&&Array.isArray(r.st.guesses)).sort((a,b)=>a.day-b.day);
+}
+function streaks(days,playedToday){
+  const set=new Set(days);let cur=0,d=playedToday?DAY:DAY-1;while(set.has(d)){cur++;d--;}
+  let best=0,run=0;[...set].sort((a,b)=>a-b).forEach((x,i,arr)=>{run=(i&&x===arr[i-1]+1)?run+1:1;best=Math.max(best,run);});
+  return{cur,best};
+}
+function gameStats(id){
+  const recs=records(id),max=id==="boxoffice"?5:(DEFS[id].max||6),wins=recs.filter(r=>isWin(id,r.st));
+  const dist=Array(max).fill(0);let losses=0;
+  recs.forEach(r=>isWin(id,r.st)?dist[Math.min(r.st.guesses.length,max)-1]++:losses++);
+  const s=streaks(wins.map(r=>r.day),recs.some(r=>r.day===DAY));
+  const out={id,played:recs.length,wins:wins.length,pct:recs.length?Math.round(wins.length/recs.length*100):0,cur:s.cur,best:s.best,dist,losses,max,
+    avg:wins.length?wins.reduce((t,r)=>t+r.st.guesses.length,0)/wins.length:null};
+  if(id==="boxoffice"&&recs.length){out.avgScore=Math.round(recs.reduce((t,r)=>t+(r.st.score||0),0)/recs.length);out.bestScore=Math.max(...recs.map(r=>r.st.score||0));}
+  return out;
+}
+const UNIT={era:"guesses",sold:"guesses",specs:"guesses",blurred:"rounds",boxoffice:"rounds"};
+function avgLine(g,s){
+  if(!s.played)return"";
+  if(g.id==="boxoffice")return`Average score <b>${s.avgScore.toLocaleString()}</b>, best <b>${s.bestScore.toLocaleString()}</b>. `+(s.avg?`You find the Blockbuster in round <b>${s.avg.toFixed(1)}</b> on average.`:`You haven't found a Blockbuster yet.`);
+  return s.avg?`You solve it in <b>${s.avg.toFixed(1)}</b> ${UNIT[g.id]} on average.`:`No solves yet. Keep at it.`;
+}
+function renderStats(){
+  const all=GAMES.map(g=>({g,s:gameStats(g.id)}));
+  const dayMap={};all.forEach(({g})=>records(g.id).forEach(r=>{(dayMap[r.day]=dayMap[r.day]||[]).push(isWin(g.id,r.st));}));
+  const days=Object.keys(dayMap).map(Number),ds=streaks(days,!!dayMap[DAY]);
+  const perfect=days.filter(d=>dayMap[d].length===GAMES.length&&dayMap[d].every(Boolean)).length;
+  const played=all.reduce((t,x)=>t+x.s.played,0),wins=all.reduce((t,x)=>t+x.s.wins,0);
+  const doneToday=dayMap[DAY]?dayMap[DAY].length:0;
+  const tile=(v,l)=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`;
+  // Best and toughest: win rate first, then fewer guesses (relative to the game's max).
+  const ranked=all.filter(x=>x.s.played).sort((a,b)=>b.s.pct-a.s.pct||((a.s.avg??a.s.max+1)/a.s.max)-((b.s.avg??b.s.max+1)/b.s.max));
+  const rankCard=(label,x)=>`<div class="rank" style="--c:${x.g.color}"><div class="gicon">${IC[x.g.id]}</div><div><div class="k">${label}</div><div class="v">${x.g.name}</div>
+    <div class="d">${x.s.pct}% win rate${x.s.avg?` · ${x.s.avg.toFixed(1)} ${UNIT[x.g.id]} avg`:""} · ${x.s.played} played</div></div></div>`;
+  const duo=ranked.length>=2?`<div class="duo">${rankCard("Your best game",ranked[0])}${rankCard("Your toughest game",ranked[ranked.length-1])}</div>`
+    :`<p class="empty-note" style="margin:-8px 0 24px">Finish at least two different games to see your best and toughest game.</p>`;
+  const gs=all.map(({g,s})=>{
+    const top=Math.max(...s.dist,s.losses,1),mostIdx=s.dist.indexOf(Math.max(...s.dist));
+    const bars=s.dist.map((n,i)=>`<div class="bar"><span>${i+1}</span><i class="${n?(i===mostIdx?"top":""):"z"}" style="width:${Math.max(8,n/top*100)}%">${n}</i></div>`).join("")
+      +`<div class="bar"><span>✕</span><i class="${s.losses?"lose":"z"}" style="width:${Math.max(8,s.losses/top*100)}%">${s.losses}</i></div>`;
+    return`<div class="gs" style="--c:${g.color}"><div>
+      <div class="gs-h"><div class="gicon">${IC[g.id]}</div><div><h3>${g.name}</h3><a href="#${g.id}">Play today's puzzle →</a></div></div>
+      <div class="mini"><div><b>${s.played}</b><span>Played</span></div><div><b>${s.pct}</b><span>Win %</span></div><div><b>${s.cur}</b><span>Streak</span></div><div><b>${s.best}</b><span>Best streak</span></div></div>
+      <p class="avg">${s.played?avgLine(g,s):`You haven't finished a ${g.name} puzzle yet.`}</p></div>
+      <div><div class="dist-h">${g.id==="boxoffice"?"Round you found the Blockbuster":g.id==="blurred"?"Rounds to solve":"Guesses to solve"}</div><div class="dist">${bars}</div></div></div>`;
+  }).join("");
+  app.innerHTML=`<div class="stats-page">
+    <a href="#" class="back">← All games</a>
+    <h1>Your stats</h1>
+    <p class="lede">Every daily puzzle you finish counts. Practice rounds don't. Today: ${doneToday} of ${GAMES.length} games done.</p>
+    <div class="tiles">${tile(days.length,"Days played")}${tile(ds.cur,"Day streak")}${tile(ds.best,"Best day streak")}${tile(wins,"Puzzles solved")}${tile(played?Math.round(wins/played*100)+"%":"–","Overall win rate")}${tile(perfect,"Perfect days")}</div>
+    ${played?duo:""}
+    <h2 class="sec-h">By game</h2>
+    <div class="gstats">${gs}</div>
+    <p class="note">A day streak counts days you finish at least one game. A perfect day means you solved all five.</p></div>`;
+}
+
+/* ============ THEME ============ */
+const themeBtn=document.getElementById("themeBtn");
+const SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg>';
+const MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>';
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  themeBtn.innerHTML=t==="dark"?SUN:MOON;
+  themeBtn.setAttribute("aria-label",t==="dark"?"Switch to light mode":"Switch to dark mode");
+  themeBtn.title=t==="dark"?"Light mode":"Dark mode";
+}
+applyTheme(document.documentElement.dataset.theme==="dark"?"dark":"light");
+themeBtn.onclick=()=>{const t=document.documentElement.dataset.theme==="dark"?"light":"dark";applyTheme(t);store.set("theme",t);};
 
 route();
 </script>
