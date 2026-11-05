@@ -268,7 +268,7 @@ setInterval(()=>{
 function act(m){if(!S)return;if(S.role==="host")hostHandle(S.pid,m);else S.net.send(m);}
 
 /* ---------- screens ---------- */
-const onParty=()=>/^party(-|$)/.test(location.hash.slice(1));
+const onParty=()=>/^(party|jackpot)(-|$)/.test(location.hash.slice(1));
 const av=(p,big)=>`<span class="pav${big?" big":""}" style="--c:${p.color}">${esc((p.name||"?").trim().charAt(0).toUpperCase()||"?")}</span>`;
 function tickTimer(){
   if(!S||!S.st||S.st.phase!=="play"||!onParty())return;
@@ -291,9 +291,9 @@ function draw(prevLog,prevJack){
 }
 function body(){
   const back=`<a href="#" class="back">← All games</a>`;
-  const head=`<div class="ghead"><div class="gicon" style="--c:#F08BB6">${PARTY_IC}</div><div><h1>Party</h1><div class="gsub">Live multiplayer · up to ${MAX_PLAYERS} players</div></div></div>`;
+  const head=`<div class="ghead"><div class="gicon" style="--c:#F08BB6">${PARTY_IC}</div><div><h1>Jackpot</h1><div class="gsub">Live multiplayer · up to ${MAX_PLAYERS} players</div></div></div>`;
   if(!S||S.status==="left"){
-    const nm=esc(store.get("partyName","")),codeFromLink=(location.hash.match(/^#party-([A-Za-z]{4})$/)||[])[1]||"";
+    const nm=esc(store.get("partyName","")),codeFromLink=(location.hash.match(/^#(?:party|jackpot)-([A-Za-z]{4})$/)||[])[1]||"";
     return`${back}${head}
       <p class="how">Each round adds a new clue about a secret person, place or thing. On your turn, name anything that fits <b>every</b> clue so far. Later rounds are worth more. One answer is the <b>Jackpot</b>, the exact thing the clues describe. Name it for a huge bonus. Most points wins.</p>
       <div class="pbox"><label class="plabel" for="pname">Your name</label><input id="pname" class="pfield" maxlength="16" placeholder="e.g. Myles" value="${nm}" autocomplete="off"></div>
@@ -307,7 +307,7 @@ function body(){
   if(S.status==="error")return`${back}${head}<div class="answer"><div class="answer-k">Couldn't connect</div><p>${esc(S.err||"")}</p></div><div class="actions"><button class="btn" data-p="leave">Back</button></div>`;
   if(S.status==="connecting"||!S.st)return`${back}${head}<div class="pwait"><span class="spin"></span>${S.role==="host"?"Creating your room…":"Joining room "+esc(S.code)+"…"}</div>`;
   const st=S.st,me=st.players.find(p=>p.pid===S.pid),isHost=S.role==="host";
-  const link=location.origin+location.pathname+"#party-"+st.code;
+  const link=location.origin+location.pathname+"#jackpot-"+st.code;
   if(st.phase==="lobby"){
     return`${back}${head}
       <div class="pcode-box"><div class="plabel">Room code</div><div class="pcode">${[...st.code].map((c,i)=>`<span style="--i:${i}">${c}</span>`).join("")}</div>
