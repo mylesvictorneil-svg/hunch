@@ -577,6 +577,10 @@ function route(){
   window.scrollTo(0,0);
 }
 window.addEventListener("hashchange",route);
+// Keep every open tab in sync: redraw when another tab saves progress, or when this tab comes back into view.
+function refresh(){if(!modal.hidden)return;const y=window.scrollY;const g=GAMES.find(x=>x.id===location.hash.slice(1));if(!g)renderHub();else if(!practice)renderGame(g);window.scrollTo(0,y);}
+window.addEventListener("storage",e=>{if(!e.key||e.key.startsWith("hunch:"))refresh();});
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")refresh();});
 
 function renderGame(g){
   closeModal();
